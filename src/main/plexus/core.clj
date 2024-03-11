@@ -4,9 +4,12 @@
    [clojure.java.io :as io]
    [plexus.utils :as u]
    [plexus.schema :as schema :refer [validate-form]]
+   [plexus.transforms :as tf]
    [clj-manifold3d.core :as m]
    [malli.core :as ma]
-   [plexus.impl :as impl]))
+   [plexus.impl :as impl])
+  (:import
+   [plexus.impl Form]))
 
 (defn- pretty-demunge
   [fn-object]
@@ -53,9 +56,13 @@
        (let [form# ~'&form
              m# (assoc (meta form#) :file *file*)
              s# (var ~schema)]
-         `(with-meta
+         `(do
             (plexus.schema/validate-form (list ~~op-key ~@opts#) (deref ~s#))
-            ~m#)))))
+            (Form.
+             (fn []
+               (with-meta
+                 (plexus.schema/validate-form (list ~~op-key ~@opts#) (deref ~s#))
+                 ~m#))))))))
 
 (defop left
   "Extrude a left curve. Rotate-extrudes about a y-axis offset
@@ -171,14 +178,13 @@
           branch context."
   schema/branch-schema)
 
-(str clojure.core/string?)
-
 (defn to
   "Body is applied only to frames specified in the required `:models [:frame ...]` paramter"
   [& p]
   (let [[opts parsed-path] (impl/parse-path p)
         extrude* (map (fn [form]
-                        (assoc form :to (:models opts)))
+                        (fn []
+                          (assoc (impl/resolve-form form) :to (:models opts))))
                       parsed-path)]
     [extrude*]))
 
@@ -318,6 +324,7 @@
                               (vector ~@clauses))
                          ~meta-props))))
 
+
 (defmacro defmodel [name & path]
   `(def ~@name (impl/extrude path)))
 
@@ -347,3 +354,7 @@
    (export model filename (m/material)))
   ([model filename material]
    (m/export-mesh (m/get-mesh (impl/to-manifold (cond-> model (m/cross-section? model) (m/extrude 1/2)))) filename :material material)))
+
+(defn transforms
+  [& forms]
+  (impl/path-transforms (impl/extrude (cons (frame :name :origin) forms))))

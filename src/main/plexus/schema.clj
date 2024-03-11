@@ -92,7 +92,7 @@
 
 (def save-transform-schema
   [:map
-   [:name [:or keyword? string?]]
+   [:name {:optional true} [:or keyword? string?]]
    [:frame [:or keyword? string?]]])
 
 (def offset-schema

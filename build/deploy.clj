@@ -13,10 +13,10 @@
         deps    (merge (:deps deps-data)
                        (-> deps-data :aliases :clj-prod :extra-deps))
         version (s/trim (with-out-str
-                                (exec/exec "git" {:proc-args ["describe" "--tags"]
-                                                  ;; The error message of the exception thrown upon error.
-                                                  :error-msg "Failed to get tags"})))]
-    (assert (re-find #"\d\.\d\.\d$" version))
+                          (exec/exec "git" {:proc-args ["describe" "--tags"]
+                                            ;; The error message of the exception thrown upon error.
+                                            :error-msg "Failed to get tags"})))]
+    (assert (re-find #"\d+\.\d+\.\d+$" version))
     (jar/jar 'org.clojars.cartesiantheatrics/plexus {:mvn/version version}
              {:out-path                (format "target/plexus-%s.jar" version)
               :paths                   ["src/main"]
