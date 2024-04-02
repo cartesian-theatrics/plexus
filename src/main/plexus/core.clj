@@ -331,8 +331,10 @@
 (defn export-models
   "Export Manifold and Extrusion vars in `namespace` using `file-ext` format."
   ([namespace file-ext]
-   (export-models namespace file-ext #".*"))
+   (export-models namespace file-ext #".*" ""))
   ([namespace file-ext match-str]
+   (export-models namespace file-ext #".*" ""))
+  ([namespace file-ext match-str name-postfix]
    (-> (io/file (format "out/%s" file-ext)) (.mkdirs))
    (doall
     (for [[_ x] (ns-map namespace)
@@ -340,7 +342,7 @@
                 var-name (str (:name var-meta))]
           :when (and (:export-model var-meta) (re-matches match-str var-name))]
       (future
-        (let [filename (-> var-meta :name name (str (format ".%s" file-ext)))
+        (let [filename (-> var-meta :name name (str name-postfix (format ".%s" file-ext)))
               m @x]
           (if (m/manifold? m)
             (m/export-mesh (m/get-mesh (cond-> m (= file-ext "3ds") (m/rotate [-90 0 0]))) (format "out/%s/%s" file-ext filename))

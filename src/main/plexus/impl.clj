@@ -181,8 +181,7 @@
                         start-transform)))))
 
 (defn resolve-form [form]
-  (form)
-  #_(if (fn? form) (form) form))
+  (form))
 
 
 (defn extrude*
@@ -217,6 +216,10 @@
              (case (:op form)
                :plexus.impl/frame
                (let [frame-id (:name form)
+                     replace (:replace form)
+                     form (if replace
+                            (assoc form :cross-section (:cross-section (get frames replace)))
+                            form)
                      default-frame-id (:default-frame state)
                      _ default-frame-id
                      default-frame (get frames default-frame-id)
@@ -236,9 +239,11 @@
                                                          :frame-transform default-frame-transform))
                                                 (select-keys form [:name :cross-section :curve-radius])))
                              (or (:meta form) {}))]
-                 (recur (-> state
-                            (assoc :default-frame frame-id)
-                            (update :current-frame-ids conj frame-id))
+                 (recur (cond-> (-> state
+                                    (assoc :default-frame frame-id)
+                                    (update :current-frame-ids conj frame-id))
+                          replace (update :current-frame-ids disj replace)
+                          )
                         forms
                         (assoc frames frame-id frame)
                         result-forms))
@@ -623,8 +628,7 @@
                      current-models (:models state)]
                  (recur (update state :models into
                                 (map (fn [model-id]
-                                       (let [model (m/transform (get extrusion-models model-id)
-                                                                base-frame-transform)
+                                       (let [model (m/transform (get extrusion-models model-id) base-frame-transform)
                                              full-model-id (if ns
                                                              (keyword (name ns) (name model-id))
                                                              model-id)]
