@@ -2,7 +2,6 @@
  :deps  {net.mikera/core.matrix {:mvn/version "0.62.0"}
          ;; org.clojars.cartesiantheatrics/clj-manifold3d {:local/root "../clj-manifold3d"}
          org.clojars.cartesiantheatrics/clj-manifold3d {:mvn/version "0.0.18"}
-         camel-snake-kebab/camel-snake-kebab {:mvn/version "0.4.3"}
          net.mikera/vectorz-clj {:mvn/version "0.48.0"}
          metosin/malli {:mvn/version "0.11.0"}
          scad-clj/scad-clj {:mvn/version "0.5.3"}}
@@ -10,6 +9,11 @@
  {:dev
   {:extra-deps
    {org.clojars.cartesiantheatrics/manifold3d$linux-x86_64 {:mvn/version "1.0.77"}}}
+
+  :test {:extra-paths ["test/main"]
+         :extra-deps  {lambdaisland/kaocha {:mvn/version "1.88.1376"}
+                       org.clojure/clojure {:mvn/version "1.11.2"}}
+         :main-opts   ["-m" "kaocha.runner"]}
 
   :deploy
   {:extra-paths ["build"]

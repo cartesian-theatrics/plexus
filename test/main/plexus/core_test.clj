@@ -1,4 +1,4 @@
-(ns plexus.core_test
+(ns plexus.core-test
   (:require
    [clj-manifold3d.core :as m]
    [clojure.test :as t]
@@ -13,7 +13,6 @@
 (def default-eps 0.002)
 
 (def pi Math/PI)
-(def pi|2 (/ pi 2))
 (def pi|2 (/ pi 2))
 (def pi|3 (/ pi 3))
 (def pi|4 (/ pi 4))
@@ -61,19 +60,3 @@
                   1 (p/right :angle pi|2)
                   2 (p/up :angle pi|2)
                   3 (p/down :angle pi|2))))))))))
-
-
-(t/deftest test-hull)
-
-(t/deftest test-loft)
-
-(t/deftest test-translate)
-
-(t/deftest test-rotate)
-
-(t/deftest test-offset)
-
-(t/deftest test-insert)
-
-(t/deftest test-)
-(test-extrudes)
