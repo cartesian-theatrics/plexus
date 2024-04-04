@@ -20,6 +20,16 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
+    - name: Install clojure tools
+      uses: DeLaGuardo/setup-clojure@12.5
+      with:
+        cli: 1.11.2.1446             # Clojure CLI based on tools.deps
+        clj-kondo: 2022.05.31
+        cljfmt: 0.10.2
+        cljstyle: 0.15.0
+        cmd-exe-workaround: 'latest'
+        zprint: 1.2.3
+
     - name: Cache Clojure Dependencies
       uses: actions/cache@v2
       with:
