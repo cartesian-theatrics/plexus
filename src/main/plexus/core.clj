@@ -2,12 +2,12 @@
   (:refer-clojure :exclude [set])
   (:require
    [clojure.java.io :as io]
-   [plexus.utils :as u]
    [plexus.schema :as schema :refer [validate-form]]
-   [plexus.transforms :as tf]
    [clj-manifold3d.core :as m]
    [malli.core :as ma]
-   [plexus.impl :as impl])
+   [plexus.impl :as impl]
+   [clojure.repl :refer [demunge]]
+   [clojure.string :as s])
   (:import
    [plexus.impl Form]))
 
@@ -16,10 +16,10 @@
   (cond (vector? fn-object)
         (into [(first fn-object)] (map pretty-demunge (subvec fn-object 1)))
         :else
-        (let [dem-fn (clojure.repl/demunge (str fn-object))
+        (let [dem-fn (demunge (str fn-object))
               pretty (second (re-find #"(.*?\/.*?)(--\d+)?[@].*" dem-fn))]
           (symbol
-           (if pretty (peek (clojure.string/split pretty #"/")) dem-fn)))))
+           (if pretty (peek (s/split pretty #"/")) dem-fn)))))
 
 
 (defn- get-map-key-schemas [schema]
