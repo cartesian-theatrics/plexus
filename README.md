@@ -6,31 +6,15 @@ Plexus is a simple tool for defining cross sections and extruding them in a piec
 
 You can specify 3D models by providing a series of extrusions to a set of cross sections, which are then composited using CSG operations.
 
-# Install
-
-This library uses [java bindings](https://github.com/SovereignShop/manifold) to the native library Manifold. You need to include the correct bindings for your platform. For linux, I recommend using `linux-x86_64` or `linux-TBB-x86_64` classifiers. For example:
-
-```clojure
-{:deps {org.clojars.cartesiantheatrics/manifold3d$linux-x86_64 {:mvn/version "1.0.78"}}}
-```
-
-The TBB (Threading Building Blocks) backed is experimental.
-
-There are also bindings for Mac using the classifiers `mac-x86_64` or `mac-TBB-x86_64`.
-
-There are no windows bindings currently.
-``` sh
-sudo apt install libassimp-dev
-```
-
-
 # Try it Out
 
-A gentle introduction to developing with plexus is available [here](https://github.com/SovereignShop/plexus-demo).
+A beginner friendly introduction to developing with Plexus is available [here](https://github.com/SovereignShop/plexus-demo).
 
 ![DevEnv](https://github.com/SovereignShop/plexus/blob/main/resources/images/plexus-demo.png)
 
+# Install
 
+This library uses [java bindings](https://github.com/SovereignShop/manifold?tab=readme-ov-file#installation) to the native library Manifold. 
 
 # Examples
 
