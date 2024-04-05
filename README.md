@@ -23,9 +23,14 @@ There are no windows bindings currently.
 sudo apt install libassimp-dev
 ```
 
-# Status
 
-Alpha, syntax and internals may change.
+# Try it Out
+
+A gentle introduction to developing with plexus is available [here](https://github.com/SovereignShop/plexus-demo).
+
+![DevEnv](https://github.com/SovereignShop/plexus/blob/main/resources/images/plexus-demo.png)
+
+
 
 # Examples
 
