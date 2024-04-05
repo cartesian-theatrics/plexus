@@ -14,7 +14,7 @@ A beginner friendly introduction to developing with Plexus is available [here](h
 
 # Install
 
-This library uses [java bindings](https://github.com/SovereignShop/manifold?tab=readme-ov-file#installation) to the native library Manifold. 
+This library uses [java bindings](https://github.com/SovereignShop/manifold?tab=readme-ov-file#installation) to the native library Manifold. The platform specific dependency needs to be included separately from plexus.
 
 # Examples
 
