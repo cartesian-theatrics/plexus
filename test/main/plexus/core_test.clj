@@ -27,7 +27,7 @@
   (let [e-props (get-props extrusion)]
     (doseq [[k x] e-props]
       (let [y (get props k)]
-        (about= x y)))))
+        (t/is (about= x y))))))
 
 (def pi Math/PI)
 (def pi|2 (/ pi 2))
@@ -98,7 +98,7 @@
              (p/forward :length 20))
             (p/set :cross-section (m/circle 6) :to [:body])
             (p/set :cross-section (m/circle 4) :to [:mask])
-            (p/forward :length 20))) ]
+            (p/forward :length 20)))]
     (test-props {:surface-area 7264.4707, :volume 7129.058} m)))
 
 (t/deftest test-orientation
