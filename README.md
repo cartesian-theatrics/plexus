@@ -8,24 +8,17 @@ You can specify 3D models by providing a series of extrusions to a set of cross 
 
 # Install
 
-This library uses [java bindings](https://github.com/SovereignShop/manifold) to the native library Manifold. You need to include the correct bindings for your platform. For linux, I recommend using `linux-x86_64` or `linux-cuda-x86_64` classifiers. For example:
+This library uses [java bindings](https://github.com/SovereignShop/manifold) to the native library Manifold. You need to include the correct bindings for your platform. For linux, I recommend using `linux-x86_64` or `linux-TBB-x86_64` classifiers. For example:
 
 ```clojure
-{:deps {org.clojars.cartesiantheatrics/manifold3d$linux-cuda-x86_64 {:mvn/version "1.0.77"}}}
+{:deps {org.clojars.cartesiantheatrics/manifold3d$linux-x86_64 {:mvn/version "1.0.79"}}}
 ```
 
-The library will fall back to CPU implementations if cuda is not found on the system, but the cuda jar is much larger at about 15mb vs. 2mb. There are experimental TBB (Threading Building Blocks) and OMP (OpenMP) flavors for the linux bindings using classifiers `linux-TBB-x86_64`/`linux-OMP-x86_64`. 
+The TBB (Threading Building Blocks) backed is experimental.
 
-```clojure
-{:deps {org.clojars.cartesiantheatrics/manifold3d$linux-TBB-x86_64 {:mvn/version "1.0.77"}}}
-```
+There are also bindings for Mac using the classifiers `mac-x86_64` or `mac-TBB-x86_64`.
 
-There are also bindings for Mac (currently only TBB) using the classifiers `mac-x86_64` or `mac-TBB-x86_64`.
-
-There are no windows jars available in a maven repository currently. See the github build artifacts for an experimental windows jar. The windows build unfortunately requires the dreaded `CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE`
-
-You also need [assimp](https://github.com/assimp/assimp) available on you system.
-
+There are no windows bindings currently.
 ``` sh
 sudo apt install libassimp-dev
 ```
