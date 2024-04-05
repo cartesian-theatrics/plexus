@@ -103,18 +103,22 @@
 
 (t/deftest test-orientation
   (test-props
-   {:surface-area 182291.09375, :volume 138770.296875}
+   {:surface-area 191659.8125, :volume 143258.34375}
    (p/extrude
     (p/frame :name :body
              :cross-section (-> (m/text "test/data/Cinzel-VariableFont_wght.ttf" "abc" 10 5 :non-zero)
                                 (m/scale-to-height 20)
                                 (m/center))
-             :curve-radius 100)
+             :curve-radius 50)
     (for [i (range 4)]
       (p/branch
        :from :body
        (case i
-         0 (p/left :angle pi|2)
-         1 (p/right :angle pi|2)
-         2 (p/up :angle pi|2)
-         3 (p/down :angle pi|2)))))))
+         0 [(p/left :angle pi|2)
+            (p/right :angle pi|2)]
+         1 [(p/right :angle pi|2)
+            (p/left :angle pi|2)]
+         2 [(p/up :angle pi|2)
+            (p/down :angle pi|2)]
+         3 [(p/down :angle pi|2)
+            (p/up :angle pi|2)]))))))
