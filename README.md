@@ -6,6 +6,8 @@ Plexus is a simple tool for defining cross sections and extruding them in a piec
 
 You can specify 3D models by providing a series of extrusions to a set of cross sections, which are then composited using CSG operations.
 
+This library is built on top of [clj-manifold3d](https://github.com/SovereignShop/clj-manifold3d), a traditional CSG library in the style of OpenSCAD. 
+
 # Try it Out
 
 A beginner friendly introduction to developing with Plexus is available [here](https://github.com/SovereignShop/plexus-demo).
