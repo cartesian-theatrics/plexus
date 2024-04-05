@@ -11,7 +11,7 @@ You can specify 3D models by providing a series of extrusions to a set of cross 
 This library uses [java bindings](https://github.com/SovereignShop/manifold) to the native library Manifold. You need to include the correct bindings for your platform. For linux, I recommend using `linux-x86_64` or `linux-TBB-x86_64` classifiers. For example:
 
 ```clojure
-{:deps {org.clojars.cartesiantheatrics/manifold3d$linux-x86_64 {:mvn/version "1.0.79"}}}
+{:deps {org.clojars.cartesiantheatrics/manifold3d$linux-x86_64 {:mvn/version "1.0.78"}}}
 ```
 
 The TBB (Threading Building Blocks) backed is experimental.
