@@ -18,6 +18,15 @@ A beginner friendly introduction to developing with Plexus is available [here](h
 
 This library uses [java bindings](https://github.com/SovereignShop/manifold?tab=readme-ov-file#installation) to the native library Manifold. The platform specific dependency needs to be included separately from plexus.
 
+# Projects Using Plexus
+
+A Simple rapidly printable hydroponic tower:
+https://github.com/SovereignShop/spiralized-hydroponic-tower
+
+Kossel delta printer:
+https://github.com/SovereignShop/kossel-printer/
+
+
 # Examples
 
 In the following example, our outer cross section is a circle with radius of 6. The mask
