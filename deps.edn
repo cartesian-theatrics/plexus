@@ -8,12 +8,13 @@
  :aliases
  {:dev
   {:extra-deps
-   {org.clojars.cartesiantheatrics/manifold3d$linux-x86_64 {:mvn/version "1.0.79"}}}
+   {org.clojars.cartesiantheatrics/manifold3d$linux-x86_64 {:mvn/version "1.0.81"}}}
 
-  :test {:extra-paths ["test/main"]
-         :extra-deps  {lambdaisland/kaocha {:mvn/version "1.88.1376"}
-                       org.clojure/clojure {:mvn/version "1.11.2"}}
-         :main-opts   ["-m" "kaocha.runner"]}
+  :test
+  {:extra-paths ["test/main"]
+   :extra-deps  {lambdaisland/kaocha {:mvn/version "1.88.1376"}
+                 org.clojure/clojure {:mvn/version "1.11.2"}}
+   :main-opts   ["-m" "kaocha.runner"]}
 
   :deploy
   {:extra-paths ["build"]

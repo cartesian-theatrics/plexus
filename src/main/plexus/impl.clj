@@ -9,6 +9,8 @@
    [plexus.triangles :as triangles]
    [plexus.transforms :as tf]))
 
+(declare extrude*)
+
 (defrecord Extrusion [result-forms frames state angle-scalar forms transforms models main-model]
   Object
   (toString [_]
@@ -337,7 +339,8 @@
                         result-forms))
 
                :plexus.impl/loft
-               (let [{:keys [to]} form
+               (let [{:keys [to algorithm]
+                      :or {algorithm :eager-nearest-neighbor}} form
                      loft-forms (normalize-segment (:plexus.impl/list form))
                      loft-frames (or to current-frame-ids)
                      ret (extrude* state loft-forms frames)]
@@ -364,6 +367,7 @@
                                                                   (m/loft
                                                                    (cons
                                                                     {:frame (-> first-segment :all-transforms (nth 0))
+                                                                     :algorithm algorithm
                                                                      :cross-section (-> first-segment :cross-section)}
                                                                     (mapcat
                                                                      (fn [{:keys [cross-section all-transforms]}]
@@ -661,7 +665,6 @@
            (throw e)
            (let [form @current-form
                  {:keys [line column file]} (meta form)
-                 _ (println "form:" form)
                  op (:op form)
                  error-string (format "Error while applying `%s` (line=%s, column=%s): %s" (name op)
                                       line

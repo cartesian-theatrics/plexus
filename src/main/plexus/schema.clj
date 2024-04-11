@@ -45,6 +45,10 @@
    [:cross-section {:optional true} :cross-section]
    [:cs {:optional true} int?]])
 
+(def loft-schema
+  [:map
+   [:algorithm {:optional true} keyword?]])
+
 (def any-map-schema
   [:map])
 

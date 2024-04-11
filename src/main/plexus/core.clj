@@ -132,7 +132,7 @@
 (defop loft
   "Loft between segments. All lofted cross-sections must have equal number of points. Optional
   `:to` parameter specifies which frames to loft."
-  schema/any-map-schema)
+  schema/loft-schema)
 
 (defop hull
   "Makes a convex hull out of wrapped segments. Optional `:to` parameter specifies which
@@ -302,6 +302,12 @@
   "the main entry point. Takes a sequence of extrusion forms. Forms are automatically flattened."
   [& forms]
   (impl/extrude forms))
+
+(defn rebuild
+  "Rebuild an extrusion in the current context. Forms will re-evaluate their args. This can be used
+  in combination with dynamic binding to achieve specialization of extrusions."
+  [extrusion]
+  (extrude (:forms extrusion)))
 
 (def ^{:doc (-> #'plexus.impl/extrusion? meta :doc) :arglists '([x])} extrusion? impl/extrusion?)
 (def ^{:doc (-> #'plexus.impl/model? meta :doc) :arglists '([x])} model? impl/model?)
