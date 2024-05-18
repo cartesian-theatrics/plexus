@@ -93,6 +93,24 @@
          (forward :length 20)])))
     (export "loft.glb" (m/material :color [0 0.7 0.7 1.0] :metalness 0.2)))
 
+
+
+(-> (extrude
+     (result :name :pipes :expr :body)
+     (frame :cross-section (m/difference (m/circle 20) (m/circle 18)) :name :body)
+     (loft
+      (forward :length 1)
+      (for [i (range 3)]
+        [(translate :x 8)
+         (set :cross-section (m/difference (m/square 30 30 true) (m/square 26 26 true)))
+         (forward :length 20)
+         (translate :x -8)
+         (set :cross-section (m/difference (m/circle 20) (m/circle 18)))
+         (forward :length 20)])))
+    (export "monomorphic-loft.glb" (m/material :color [0 0.7 0.7 1.0] :metalness 0.2)))
+
+
+
 ;; Branching
 
 (def pi|2 (/ Math/PI 2))

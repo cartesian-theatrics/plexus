@@ -136,7 +136,7 @@ in a hull form to make a convex hull out of those segments:
 
 ## Lofts
 
-You can loft between a sequence of isomorphic cross-sections with `loft`. Edges are constructed between corresponding vertices of each cross-section.
+You can loft between a sequence of cross-sections with `loft`. Edges are constructed between corresponding vertices of each cross-section.
 
 ``` clojure
 (-> (extrude
@@ -153,6 +153,26 @@ You can loft between a sequence of isomorphic cross-sections with `loft`. Edges 
 ```
 
 ![Loft Example](https://github.com/SovereignShop/plexus/blob/main/resources/images/loft-example.png)
+
+Lofted sections don't need to be isomorphic.
+
+``` clojure
+(-> (extrude
+     (result :name :pipes :expr :body)
+     (frame :cross-section (m/difference (m/circle 20) (m/circle 18)) :name :body)
+     (loft
+      (forward :length 1)
+      (for [i (range 3)]
+        [(translate :x 8)
+         (set :cross-section (m/difference (m/square 30 30 true) (m/square 26 26 true)))
+         (forward :length 20)
+         (translate :x -8)
+         (set :cross-section (m/difference (m/circle 20) (m/circle 18)))
+         (forward :length 20)])))
+    (export "monomorphic-loft.glb" (m/material :color [0 0.7 0.7 1.0] :metalness 0.2)))
+```
+
+![Loft Example 2](resources/images/monomorphic-loft.png)
 
 ## Branching
 
