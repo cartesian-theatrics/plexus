@@ -339,7 +339,7 @@
   ([namespace file-ext]
    (export-models namespace file-ext #".*" ""))
   ([namespace file-ext match-str]
-   (export-models namespace file-ext #".*" ""))
+   (export-models namespace file-ext match-str ""))
   ([namespace file-ext match-str name-postfix]
    (-> (io/file (format "out/%s" file-ext)) (.mkdirs))
    (doall
