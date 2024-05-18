@@ -154,7 +154,7 @@ You can loft between a sequence of cross-sections with `loft`. Edges are constru
 
 ![Loft Example](https://github.com/SovereignShop/plexus/blob/main/resources/images/loft-example.png)
 
-Lofted sections can be bimorphic.
+Lofted sections don't need to be isomorphic.
 
 ``` clojure
 (-> (extrude
@@ -169,7 +169,7 @@ Lofted sections can be bimorphic.
          (translate :x -8)
          (set :cross-section (m/difference (m/circle 20) (m/circle 18)))
          (forward :length 20)])))
-    (export "bimorphic-loft.glb" (m/material :color [0 0.7 0.7 1.0] :metalness 0.2)))
+    (export "monomorphic-loft.glb" (m/material :color [0 0.7 0.7 1.0] :metalness 0.2)))
 ```
 
 ![Loft Example 2](resources/images/bimorphic-loft.png)
