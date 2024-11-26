@@ -7,6 +7,7 @@
 (def curve-schema
   [:map
    [:angle {:optional true} number?]
+   [:arc-length {:optional true} number?]
    [:curve-radius {:optional true} number?]
    [:transform-step-fn {:optional true} fn?]])
 

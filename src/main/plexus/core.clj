@@ -69,8 +69,9 @@
   along the x axis by negative `:curve-radians`.
 
   opts
-  `:angle` - number of radians to cufve.
-  `:curve-radius` - radius of the curve."
+  `:angle` - number of radians to curve.
+  `:curve-radius` - radius of the curve.
+  `:arc-length` - Arc length of the curve (exclusive with `:angle`)."
   schema/curve-schema)
 
 (defop right
@@ -194,13 +195,7 @@
    opts
    `:name` (required) A keyword or string naming the frame.
    `:cross-section` (optional) Cross-section to associate with the
-                     current frame.
-
-   Options that specify default values to for future extrusion segments applied to this frame:
-
-   `:cs` (optional) specifies the default number of circular segments to each
-         curved extrusion.
-   `:curve-radius` (optional) Default curve-radius of future segments applied to this frame."
+                     current frame."
   schema/frame-schema)
 
 (defop save-transform

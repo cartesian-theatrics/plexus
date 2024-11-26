@@ -223,7 +223,6 @@
                             (assoc form :cross-section (:cross-section (get frames replace)))
                             form)
                      default-frame-id (:default-frame state)
-                     _ default-frame-id
                      default-frame (get frames default-frame-id)
                      default-frame-transform (m/compose-frames
                                               (:frame-transform default-frame)
@@ -233,13 +232,13 @@
                                                   (assoc frame
                                                          :segment-transform
                                                          (m/compose-frames
-                                                          (m/invert-frame (:frame-transform frame))
-                                                          default-frame-transform))
+                                                            (m/invert-frame (:frame-transform frame))
+                                                            default-frame-transform))
                                                   (assoc default-frame
                                                          :segments []
                                                          :segment-transform (m/frame 1)
                                                          :frame-transform default-frame-transform))
-                                                (select-keys form [:name :cross-section :curve-radius])))
+                                          (select-keys form [:name :cross-section :curve-radius])))
                              (or (:meta form) {}))]
                  (recur (cond-> (-> state
                                     (assoc :default-frame frame-id)
@@ -384,10 +383,13 @@
                         (into result-forms (:result-forms form))))
 
                (:plexus.impl/left :plexus.impl/right :plexus.impl/up :plexus.impl/down)
-               (let [{:keys [curve-radius angle to op transform-step-fn props gap cs]
+               (let [{:keys [curve-radius angle to op transform-step-fn props gap cs arc-length]
                       :or {transform-step-fn (fn [tf angle] tf)
                            cs 20}} form
-                     apply-to (if to (set to) current-frame-ids)]
+                     apply-to (if to (set to) current-frame-ids)
+                     angle (if angle
+                             angle
+                             (/ arc-length curve-radius))]
                  (recur state
                         forms
                         (reduce
@@ -405,6 +407,9 @@
                                                    (f (sign r))
                                                    (tf/go-forward d)
                                                    (f (sign (- angle r))))
+                                 is-gap (or (true? gap)
+                                            (and (sequential? gap) (contains? (set gap) frame-id)))
+                                 cross-section (and (not is-gap) (:cross-section frame))
                                  all-tfs (if gap
                                            []
                                            (all-transforms start-transform
@@ -417,9 +422,6 @@
                                                            angle
                                                            cs
                                                            transform-step-fn))
-                                 is-gap (or (true? gap)
-                                            (and (sequential? gap) (contains? (set gap) frame-id)))
-                                 cross-section (and (not is-gap) (:cross-section frame))
                                  manifold (when cross-section
                                             (-> cross-section
                                                 (m/rotate 180)
@@ -452,7 +454,9 @@
 
                :plexus.impl/translate
                (let [{:keys [x y z to global?]} form
-                     apply-to (if to (set to) current-frame-ids)]
+                     apply-to (if to
+                                (set to)
+                                (conj current-frame-ids (:default-frame state)))]
                  (recur state
                         forms
                         (reduce
@@ -466,13 +470,15 @@
                                                                          (DoubleVec3. (or x 0) (or y 0) (or z 0))))
                                       (update frame :segment-transform m/translate [(or x 0) (or y 0) (or z 0)])))))
                          frames
-                         (conj apply-to (:default-frame state)))
+                         apply-to)
                         result-forms))
 
 
                :plexus.impl/rotate
                (let [{:keys [x y z to]} form
-                     apply-to (if to (set to) current-frame-ids)]
+                     apply-to (if to
+                                (set to)
+                                (conj current-frame-ids (:default-frame state)))]
                  (recur state
                         forms
                         (reduce
@@ -484,7 +490,7 @@
                                                                                (* 1 (or y 0))
                                                                                (* 1 (or z 0))]))))
                          frames
-                         (conj apply-to (:default-frame state)))
+                         apply-to)
                         result-forms))
 
                :plexus.impl/segment
