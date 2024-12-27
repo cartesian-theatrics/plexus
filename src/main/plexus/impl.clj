@@ -1,5 +1,5 @@
 (ns plexus.impl
-  (:import [manifold3d.glm MatrixTransforms DoubleVec3]
+  (:import [manifold3d.linalg MatrixTransforms DoubleVec3]
            [manifold3d Manifold ManifoldVector])
   (:require
    [clj-manifold3d.impl :as impl]

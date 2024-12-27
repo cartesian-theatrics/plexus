@@ -1,6 +1,6 @@
 (ns plexus.transforms
   (:import
-   [manifold3d.glm MatrixTransforms DoubleMat4x3 DoubleVec3 DoubleVec3])
+   [manifold3d.linalg MatrixTransforms DoubleMat3x4 DoubleVec3 DoubleVec3])
   (:require
    [clojure.core.matrix :as mat]))
 
@@ -17,7 +17,7 @@
    (MatrixTransforms/Roll m a)))
 
 (defn transform? [x]
-  (instance? DoubleMat4x3 x))
+  (instance? DoubleMat3x4 x))
 
 (defn- about-equal? [v1 v2]
   (loop [[x & xs] v1
@@ -75,13 +75,13 @@
 
 (defn set-translation
   ([m [x y z]]
-   (DoubleMat4x3. (.getColumn ^DoubleVec3 m 0)
+   (DoubleMat3x4. (.getColumn ^DoubleVec3 m 0)
                   (.getColumn ^DoubleVec3 m 1)
                   (.getColumn ^DoubleVec3 m 2)
                   (DoubleVec3. x y z)))
   ([m v axis]
    (let [^DoubleVec3 tr (.getColumn m 3)]
-     (DoubleMat4x3. (.getColumn ^DoubleVec3 m 0)
+     (DoubleMat3x4. (.getColumn ^DoubleVec3 m 0)
                     (.getColumn ^DoubleVec3 m 1)
                     (.getColumn ^DoubleVec3 m 2)
                     (case axis
@@ -94,8 +94,8 @@
     [(.x tr) (.y tr) (.z tr)]))
 
 (def identity-tf
-  (DoubleMat4x3. 1))
+  (DoubleMat3x4/IdentityMat))
 
 (defn transform
   ([]
-   (DoubleMat4x3. 1)))
+   (DoubleMat3x4/IdentityMat)))
