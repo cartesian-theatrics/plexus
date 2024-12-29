@@ -1,8 +1,6 @@
 (ns plexus.transforms
   (:import
-   [manifold3d.linalg MatrixTransforms DoubleMat3x4 DoubleVec3 DoubleVec3])
-  (:require
-   [clojure.core.matrix :as mat]))
+   [manifold3d.linalg MatrixTransforms DoubleMat3x4 DoubleVec3 DoubleVec3]))
 
 (defn yaw
   ([m a]
@@ -18,37 +16,6 @@
 
 (defn transform? [x]
   (instance? DoubleMat3x4 x))
-
-(defn- about-equal? [v1 v2]
-  (loop [[x & xs] v1
-         [y & ys] v2]
-    (cond
-      (nil? x) true
-
-      (< (abs (- x y)) 0.00001)
-      (recur xs ys)
-
-      :else false)))
-
-(defn- opposing? [v1 v2]
-  (about-equal? (mat/add v1 v2) [0 0 0]))
-
-(defn angle-between [a b]
-  (Math/acos (/ (mat/dot a b) (* ( mat/magnitude a) (mat/magnitude b)))))
-
-(defn rotation-axis-and-angle [v1 v2 opp]
-  (let [cross (mat/cross v1 v2)]
-    (if (about-equal? cross [0 0 0])
-      (if (opposing? v1 v2)
-        [Math/PI opp]
-        [0 opp])
-      [(angle-between v1 v2) (mat/normalise cross)])))
-
-(defn get-roll
-  [tf]
-  (let [rm (:dir tf)
-        [angle _] (rotation-axis-and-angle [1 0 0] (nth rm 0) [0 0 1])]
-    angle))
 
 (defn rotate [m axis a]
   (MatrixTransforms/Rotate m

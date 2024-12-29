@@ -3,10 +3,9 @@
            [manifold3d Manifold ManifoldVector])
   (:require
    [clj-manifold3d.impl :as impl]
-   [plexus.utils :as u]
    [malli.core :as ma]
    [clj-manifold3d.core :as m]
-   [plexus.triangles :as triangles]
+   [plexus.utils :as u]
    [plexus.transforms :as tf]))
 
 (declare extrude*)
@@ -156,8 +155,6 @@
 
           :else
           [args (vec (cons x xs))])))
-
-(defn form? [x])
 
 (defn normalize-segment [segment]
   (if (sequential? segment)
@@ -399,7 +396,7 @@
                                                   (:curve-radius frame)
                                                   (throw (Exception. "No :curve-radius defined for frame or segment.")))
                                  start-transform (:segment-transform frame)
-                                 d (triangles/bAc->a curve-radius angle curve-radius)
+                                 d (u/bAc->a curve-radius angle curve-radius)
                                  r (- (/ Math/PI 2) (/ (- Math/PI angle) 2))
                                  sign (case op (:plexus.impl/left :plexus.impl/up) - +)
                                  f (case op (:plexus.impl/up :plexus.impl/down) tf/pitch tf/yaw)

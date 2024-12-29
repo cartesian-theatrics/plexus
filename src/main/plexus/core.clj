@@ -112,7 +112,7 @@
   schema/curve-generic-schema)
 
 (defop forward
-  "Extrude the model set forward.
+  "Extrude the model set forward, relative to current frame.
 
   opts:
 
