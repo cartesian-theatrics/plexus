@@ -1,30 +1,29 @@
 {:paths ["src/main" "resources"]
- :deps  {org.clojars.cartesiantheatrics/clj-manifold3d {:mvn/version "1.1.1"}
-         metosin/malli {:mvn/version "0.11.0"}}
+ :deps  {org.clojure/clojure {:mvn/version "1.12.6"}
+         org.clojars.cartesiantheatrics/clj-manifold3d {:mvn/version "1.2.0"}
+         metosin/malli {:mvn/version "0.20.1"}}
  :aliases
  {:cljs
   {:extra-paths ["test/main" "test/cljs" "test/sci"]
-   :override-deps {org.clojars.cartesiantheatrics/clj-manifold3d {:local/root "../clj-manifold3d"}}
-   :extra-deps {thheller/shadow-cljs {:mvn/version "2.22.9"}
-                org.babashka/sci {:mvn/version "0.10.49"}}}
+   :extra-deps {thheller/shadow-cljs {:mvn/version "3.5.3"}
+                org.babashka/sci {:mvn/version "0.15.58"}}}
   :sci
   {:extra-paths ["test/sci"]
-   :extra-deps {org.babashka/sci {:mvn/version "0.10.49"}}}
+   :extra-deps {org.babashka/sci {:mvn/version "0.15.58"}}}
   :local-dev
   {:override-deps {org.clojars.cartesiantheatrics/clj-manifold3d {:local/root "../clj-manifold3d"}}
-   :extra-deps {org.clojars.cartesiantheatrics/manifold3d$linux-TBB-x86_64
+   :extra-deps {org.clojars.cartesiantheatrics/manifold3d$linux-x86_64
                 {:local/root "../manifold/bindings/java/target/manifold3d-1.0.39.jar"}}}
   :dev
   {:extra-deps
-   {org.clojars.cartesiantheatrics/manifold3d$linux-TBB-x86_64 {:mvn/version "2.0.3"}}}
+   {org.clojars.cartesiantheatrics/manifold3d$linux-x86_64 {:mvn/version "2.2.0"}}}
 
   :test
   {:extra-paths ["test/main"]
-   :extra-deps  {lambdaisland/kaocha {:mvn/version "1.88.1376"}
-                 org.clojure/clojure {:mvn/version "1.11.2"}}
+   :extra-deps  {lambdaisland/kaocha {:mvn/version "1.91.1392"}
+                 org.clojure/clojure {:mvn/version "1.12.6"}}
    :main-opts   ["-m" "kaocha.runner"]}
 
   :deploy
   {:extra-paths ["build"]
-   :extra-deps {badigeon/badigeon {:mvn/version "1.7"}
-                org.clojure/clojure {:mvn/version "1.11.1"}}}}}
+   :extra-deps {badigeon/badigeon {:mvn/version "1.7"}}}}}

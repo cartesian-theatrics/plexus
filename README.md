@@ -16,6 +16,14 @@ A beginner friendly introduction to developing with Plexus is available [here](h
 
 # Install
 
+```clojure
+org.clojars.cartesiantheatrics/plexus {:mvn/version "2.0.0"}
+```
+
+On the JVM, also add the native Manifold `2.2.0` artifact for your platform
+(for Linux x86_64, `org.clojars.cartesiantheatrics/manifold3d$linux-x86_64`).
+See [the release notes](CHANGELOG.md) for the rebuild evaluation change in 2.0.0.
+
 This library uses [java bindings](https://github.com/SovereignShop/manifold?tab=readme-ov-file#installation) to the native library Manifold. The platform specific dependency needs to be included separately from plexus.
 
 ## ClojureScript and SCI
@@ -32,16 +40,17 @@ be passed to `map` or `apply`, and accept an options map:
   (map p/forward [{:length 2} {:length 3}]))
 ```
 
-The published `clj-manifold3d` 1.1.1 dependency remains the JVM default. For JS,
-use the sibling checkout's JS/WASM bindings (the `:cljs` development alias does
-this automatically), or a release containing that API:
+The published `clj-manifold3d` 1.2.0 dependency supports both JVM and JavaScript
+and includes matching WASM assets. No sibling checkout is required. Copy the
+classpath resources `clj_manifold3d/wasm/manifold.js` and `manifold.wasm` to your
+application's public asset directory. For this checkout's Node tests:
 
-```clojure
-org.clojars.cartesiantheatrics/clj-manifold3d {:local/root "../clj-manifold3d"}
+```sh
+clojure -M:cljs scripts/prepare-cljs.clj
 ```
 
 Initialize the WASM backend once before modeling. In a browser, load
-`clj-manifold3d/public/wasm/manifold.js`, serve its matching `manifold.wasm`, and:
+the copied `manifold.js`, serve its matching `manifold.wasm`, and:
 
 ```clojure
 (require '[clj-manifold3d.core :as m] '[plexus.core :as p])
@@ -63,7 +72,7 @@ follow that backend. `export-models` (namespace scanning and JVM filesystem I/O)
 is JVM-only. The optional `defmodel` convenience macro is JVM-only; portable
 code uses `(def name (p/extrude ...))`.
 
-SCI support is opt-in. Add `org.babashka/sci` (tested with `0.10.49`) and compile
+SCI support is opt-in. Add `org.babashka/sci` (tested with `0.15.58`) and compile
 `plexus.sci` into your host. The adapter exposes the function API and a
 source-aware macro DSL on both JVM and JavaScript:
 
@@ -212,13 +221,14 @@ re-evaluation is intended. SCI supports both this explicit form and the automati
 clojure -M:dev:test                 # Published JVM dependencies
 clojure -M:dev:test:sci             # Also test interpreted models
 clojure -M:local-dev:test:sci       # Sibling bindings and local native jar
+clojure -M:cljs scripts/prepare-cljs.clj
 clojure -M:cljs -m shadow.cljs.devtools.cli release test
 node target/cljs-tests.js          # Real WASM geometry and SCI, advanced compilation
 python3 scripts/test-lint.py       # Requires clj-kondo on PATH
 ```
 
-The JS runner loads the sibling checkout's `public/wasm/manifold.js` and matching
-WASM binary. Shared tests cover CSG, branches, all four curves, gaps, loft sampling,
+The JS runner loads `target/wasm/manifold.js` and the matching WASM binary
+extracted from the resolved dependency by `scripts/prepare-cljs.clj`. Shared tests cover CSG, branches, all four curves, gaps, loft sampling,
 hulls, insertion, targeting, points, transforms, validation, and deferred rebuilding.
 The existing JVM tests, including the forward sampling regressions, remain enabled.
 

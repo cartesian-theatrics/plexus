@@ -14,10 +14,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up JDK 17
+    - name: Set up JDK 21
       uses: actions/setup-java@v2
       with:
-        java-version: '17'
+        java-version: '21'
         distribution: 'temurin'
 
     - name: Install clojure tools
@@ -44,4 +44,15 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y libassimp-dev
 
     - name: Run tests
-      run: clojure -M:dev:test
+      run: clojure -M:dev:test:sci
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Test ClojureScript and SCI with published WASM
+      run: |
+        clojure -M:cljs scripts/prepare-cljs.clj
+        clojure -M:cljs -m shadow.cljs.devtools.cli release test
+        node target/cljs-tests.js

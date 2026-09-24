@@ -11,9 +11,9 @@
 
 (defn main []
   (let [resolve (gobj/get (js/require "node:path") "resolve")
-        factory (js/require (resolve "../clj-manifold3d/public/wasm/manifold.js"))
+        factory (js/require (resolve "target/wasm/manifold.js"))
         bytes ((gobj/get (js/require "node:fs") "readFileSync")
-               (resolve "../clj-manifold3d/public/wasm/manifold.wasm"))]
+               (resolve "target/wasm/manifold.wasm"))]
     (-> (m/init! {:factory factory :wasm-binary bytes})
         (.then (fn [_] (m/with-disposal #(run-tests 'plexus.portable-test 'plexus.sci-test 'plexus.source-test))))
         (.catch (fn [e] (js/console.error e) (gobj/set js/process "exitCode" 1))))))
