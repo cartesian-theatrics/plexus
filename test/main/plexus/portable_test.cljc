@@ -147,3 +147,17 @@
     (is (p/frame? (p/get-frame built "body")))
     (is (near? 2 (volume built "result")))
     (is (near? 2 (last (tf/translation-vector (p/lookup-transform built "end")))))))
+
+(deftest nil-step-count-uses-default-sampling
+  ;; scad-etc.utils/calc-right-forward-left-segment passes its optional count
+  ;; through as nil; this was accepted before the CLJC migration.
+  (let [calls (atom [])
+        built (p/extrude
+               (p/frame :name :body :cross-section (m/square 1 1))
+               (p/forward :length 10 :n-steps nil
+                          :transform-step-fn (fn [frame i]
+                                               (swap! calls conj i)
+                                               frame)))]
+    (is (= [1 0] @calls))
+    (is (near? 10 (volume built :body)))
+    (is (= 2 (count (p/transforms (p/forward :length 10 :n-steps nil)))))))

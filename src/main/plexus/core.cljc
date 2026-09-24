@@ -5,6 +5,16 @@
             [clj-manifold3d.core :as m]
             [plexus.impl :as impl]))
 
+(defn with-source
+  "Build a form with explicit :file, :line, :column, and optional :source-form.
+  Calls the zero-argument builder once. Locations survive deferred evaluation and
+  rebuilds. Usable without macros, including from SCI and generated model code."
+  [source build]
+  (try
+    (impl/attach-source source (build))
+    (catch #?(:clj Exception :cljs :default) error
+      (throw (impl/error-with-context error nil source)))))
+
 (defn deferred
   "Defer a zero-argument function returning a form or nested sequence of forms.
   Called once on each extrusion/rebuild, in the caller's dynamic bindings."

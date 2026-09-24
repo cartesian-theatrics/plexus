@@ -59,7 +59,7 @@
     [:y {:optional true} number?]
     [:z {:optional true} number?]
     [:length {:optional true} number?]
-    [:n-steps {:optional true} pos-int?]
+    [:n-steps {:optional true} [:maybe pos-int?]]
     [:transform-step-fn {:optional true} fn?]]
    [:fn {:error/message "x, y, z, and length are mutually exclusive."}
     (fn [{:keys [x y z length]}]

@@ -2,6 +2,7 @@
 (defn path [distance options]
   [(p/frame :name :body)
    (p/forward :length distance)
+   (p/forward :length distance :n-steps nil)
    (p/forward options)
    (p/branch :from :body (p/forward {:z 1}))
    (p/hull (p/forward :x 2))

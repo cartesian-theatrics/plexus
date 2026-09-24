@@ -136,8 +136,54 @@ clj-kondo --lint your-model.clj \
 The hooks leave ordinary symbol analysis intact and do not execute model code.
 Computed options maps and nonliteral values still need runtime validation; the
 hooks are not a general type checker. Open-ended defaults and metadata remain
-supported. Runtime validation no longer has macro call-site metadata; attach
-metadata to form maps when needed, or use the linter for source locations.
+supported.
+
+## Source locations in errors
+
+The macro-free `plexus.core` functions cannot automatically capture their caller's
+source syntax. Errors raised while applying DSL operations or evaluating result
+expressions now include the offending form in `:form`, the operation in `:key` /
+`:op`, and the original exception as their cause.
+
+For automatic file/line/column and the original source expression, use the
+optional `plexus.source` operation macros. They delegate to the core functions
+and evaluate arguments once; they do not restore implicit re-evaluation:
+
+```clojure
+;; JVM
+(require '[plexus.core :as p] '[plexus.source :as ps])
+
+(p/extrude
+  (ps/frame :name :body)
+  (ps/left :angle 1)) ; Missing curve radius: error points to this exact call.
+```
+
+In ClojureScript, require the macros explicitly:
+
+```clojure
+(ns my.model
+  (:require [plexus.core :as p])
+  (:require-macros [plexus.source :as ps]))
+```
+
+Existing unqualified operation calls can retain their syntax by referring those
+operations from `plexus.source`, while referring `extrude`, `get-model`, etc.
+from `plexus.core`. Alternatively, wrap selected expressions with
+`(ps/at (p/left :angle 1))`.
+
+The error's `ex-data` includes `:file`, `:line`, `:column`, and `:source-form`.
+Locations survive nested branches, result trees, deferred forms, and rebuilding.
+Editors, generated code, and SCI hosts can supply the same information without
+macros:
+
+```clojure
+(p/with-source {:file "model.clj" :line 12 :column 3}
+  #(p/left :angle 1))
+```
+
+`with-source` calls its builder immediately. Use `p/deferred` inside it when
+re-evaluation is intended. SCI supports this explicit form; `plexus.source`
+macros are an optional compiled Clojure/ClojureScript convenience.
 
 ## Development checks
 
@@ -154,6 +200,9 @@ The JS runner loads the sibling checkout's `public/wasm/manifold.js` and matchin
 WASM binary. Shared tests cover CSG, branches, all four curves, gaps, loft sampling,
 hulls, insertion, targeting, points, transforms, validation, and deferred rebuilding.
 The existing JVM tests, including the forward sampling regressions, remain enabled.
+
+The [scad-etc compatibility audit](docs/scad-etc-compatibility.md) compares against
+the pre-migration behavior, including known pre-existing failures.
 
 # Projects Using Plexus
 

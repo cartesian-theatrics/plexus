@@ -151,9 +151,38 @@
                             (tf-fn transform r d step-angle)))
                         start-transform)))))
 
-(defn resolve-form [form]
-  (if (fn? form) (recur (form)) form))
+(def source-keys [:file :line :column :source-form])
 
+(defn attach-source [source form]
+  (cond
+    (sequential? form) (mapv #(attach-source source %) form)
+    (or (map? form) (fn? form)) (with-meta form (merge source (meta form)))
+    :else form))
+
+(defn error-with-context
+  "Keep the innermost operation, its arguments, source location, and cause."
+  [error form source]
+  (let [data (ex-data error)
+        op (or (:key data) (:op data) (:op form) (:op source))
+        source (merge (select-keys source source-keys)
+                      (select-keys (meta form) source-keys)
+                      (select-keys data source-keys))
+        original (or (:original-exception data) error)
+        message (str (if op (str "Error while applying `" op "`") "Error while building Plexus form")
+                     (when (seq source)
+                       (str " at " (:file source) ":" (:line source) ":" (:column source)))
+                     ": " #?(:clj (.getMessage original) :cljs (.-message original)))]
+    (ex-info message
+             (merge data source
+                    {:message message :key op :op op
+                     :form (or (:form data) form)
+                     :original-exception original})
+             error)))
+
+(defn resolve-form [form]
+  (if (fn? form)
+    (recur (attach-source (meta form) (form)))
+    form))
 
 (defn extrude*
   ([forms]
@@ -182,7 +211,8 @@
              :forms (:forms state)
              :transforms (:transforms state)
              :models (:models state)})
-           (let [form (resolve-form form)]
+           (let [_ (reset! current-form form)
+                 form (resolve-form form)]
              (reset! current-form form)
              (if (or (nil? form) (sequential? form))
                (recur state (concat (normalize-segment form) forms) frames result-forms)
@@ -639,21 +669,7 @@
 
                (throw (ex-info (str "No matching clause for form: " form) {:form form})))))))
        (catch #?(:clj Exception :cljs :default) e
-         (if-let [key (:key (ex-data e))]
-           (throw e)
-           (let [form @current-form
-                 {:keys [line column file]} (meta form)
-                 op (:op form)
-                 error-string (str "Error while applying `" op "` (line=" line
-                                   ", column=" column "): "
-                                   #?(:clj (.getMessage e) :cljs (.-message e)))
-                 exception-data {:message error-string
-                                 :line line
-                                 :column column
-                                 :file file
-                                 :key op
-                                 :original-exception e}]
-             (throw (ex-info error-string exception-data)))))))))
+         (throw (error-with-context e @current-form (meta @current-form))))))))
 
 (defn extrude [forms]
   (let [result (extrude* (normalize-segment forms))
@@ -686,7 +702,9 @@
                  (reduce (fn [result-frames result-form]
                            (assoc result-frames
                                   (:name result-form)
-                                  ((fn eval-result [expr]
+                                  ((fn eval-result [expr & [parent-source]]
+                                     (let [source (merge (meta result-form) parent-source (meta expr))]
+                                     (try
                                      (cond (or (keyword? expr) (string? expr))
                                            (if-let [frame_ (get result-frames expr)]
                                              frame_
@@ -698,16 +716,16 @@
                                                  args (normalize-segment (::list expr))]
                                              (case (:op expr)
                                                :plexus.impl/hull
-                                               (m/hull (map to-manifold-cached (map eval-result args)))
+                                               (m/hull (map to-manifold-cached (map #(eval-result % source) args)))
 
                                                :plexus.impl/mirror
-                                               (let [ret (eval-result (first args))]
+                                               (let [ret (eval-result (first args) source)]
                                                  (cond (frame? ret) (update (to-model ret) :manifold m/mirror (:normal expr))
                                                        (model? ret) (update ret :manifold m/mirror (:normal expr))
                                                        (m/manifold? ret) (m/mirror ret (:normal expr))))
 
                                                :plexus.impl/translate
-                                               (let [ret (eval-result (first args))
+                                               (let [ret (eval-result (first args) source)
                                                      tr [(or (:x expr) 0)
                                                          (or (:y expr) 0)
                                                          (or (:z expr) 0)]]
@@ -716,7 +734,7 @@
                                                        (m/manifold? ret) (m/translate ret tr)))
 
                                                :plexus.impl/rotate
-                                               (let [ret (eval-result (first args))]
+                                               (let [ret (eval-result (first args) source)]
                                                  (cond (or (frame? ret) (model? ret)) (update ret :frame-transform m/rotate
                                                                                               [(or (:x expr) 0)
                                                                                                (or (:y expr) 0)
@@ -727,21 +745,23 @@
                                                                                         (* angle-scalar (or (:z expr) 0))])))
 
                                                :plexus.impl/union
-                                               (m/union (map to-manifold-cached (map eval-result args)))
+                                               (m/union (map to-manifold-cached (map #(eval-result % source) args)))
 
                                                :plexus.impl/difference
-                                               (m/difference (map to-manifold-cached (map eval-result args)))
+                                               (m/difference (map to-manifold-cached (map #(eval-result % source) args)))
 
                                                :plexus.impl/intersection
-                                               (m/intersection (map to-manifold-cached (map eval-result args)))
+                                               (m/intersection (map to-manifold-cached (map #(eval-result % source) args)))
 
                                                :plexus.impl/trim-by-plane
-                                               (let [ret (eval-result (first args))
+                                               (let [ret (eval-result (first args) source)
                                                      normal (:normal expr)
                                                      origin-offset (or (:origin-offset expr) 0)]
                                                  (m/trim-by-plane ret normal origin-offset))
 
-                                               (throw (ex-info (str "Unknown expr: " expr) {:expr expr}))))))
+                                               (throw (ex-info (str "Unknown expr: " expr) {:expr expr})))))
+                                     (catch #?(:clj Exception :cljs :default) e
+                                       (throw (error-with-context e expr (assoc source :op ::result)))))))
                                    (:expr result-form))))
                          unioned-frames
                          (rseq result-forms))))))))

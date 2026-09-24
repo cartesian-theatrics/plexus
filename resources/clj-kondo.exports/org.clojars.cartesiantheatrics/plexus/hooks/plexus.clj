@@ -55,7 +55,7 @@
                      ;; set and set-meta deliberately accept arbitrary defaults/metadata.
                      (#{'set 'set-meta} op) true
                      (numeric-options k) (number? v)
-                     (= :n-steps k) (pos-int? v)
+                     (= :n-steps k) (or (nil? v) (pos-int? v))
                      (= :cs k) (int? v)
                      (#{:name :from :namespace :frame} k) (or (keyword? v) (string? v))
                      (= :normal k) (and (vector? v) (= 3 (count v)) (every? number? v))

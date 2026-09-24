@@ -28,3 +28,15 @@
             (def segment (p/deferred (fn [] (p/forward :length *length*))))
             (binding [*length* 7]
               (p/points :axes [:x :z] (p/frame :name :origin) segment))"))))
+
+(deftest interpreted-explicit-source-location
+  (let [result
+        (sci/eval-string* (sci/init ps/config)
+          (str "(require '[plexus.core :as p])
+                (try
+                  (p/extrude (p/frame :name :origin)
+                    (p/with-source {:file \"editor.clj\" :line 42 :column 7}
+                      (fn [] (p/left :angle 1))))
+                  (catch " #?(:clj "Exception" :cljs ":default") " e
+                    (select-keys (ex-data e) [:file :line :column :key])))"))]
+    (is (= {:file "editor.clj" :line 42 :column 7 :key :plexus.impl/left} result))))

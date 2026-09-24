@@ -21,6 +21,30 @@
           plexus.core/result hooks.plexus/operation
           plexus.core/insert hooks.plexus/operation
           plexus.core/trim-by-plane hooks.plexus/operation
-          plexus.core/to hooks.plexus/operation}}
+          plexus.core/to hooks.plexus/operation
+          plexus.source/left hooks.plexus/operation
+          plexus.source/right hooks.plexus/operation
+          plexus.source/up hooks.plexus/operation
+          plexus.source/down hooks.plexus/operation
+          plexus.source/curve hooks.plexus/operation
+          plexus.source/forward hooks.plexus/operation
+          plexus.source/loft hooks.plexus/operation
+          plexus.source/hull hooks.plexus/operation
+          plexus.source/translate hooks.plexus/operation
+          plexus.source/mirror hooks.plexus/operation
+          plexus.source/rotate hooks.plexus/operation
+          plexus.source/transform hooks.plexus/operation
+          plexus.source/set hooks.plexus/operation
+          plexus.source/set-meta hooks.plexus/operation
+          plexus.source/branch hooks.plexus/operation
+          plexus.source/frame hooks.plexus/operation
+          plexus.source/save-transform hooks.plexus/operation
+          plexus.source/offset hooks.plexus/operation
+          plexus.source/add-ns hooks.plexus/operation
+          plexus.source/result hooks.plexus/operation
+          plexus.source/insert hooks.plexus/operation
+          plexus.source/trim-by-plane hooks.plexus/operation
+          plexus.source/to hooks.plexus/operation}}
  :linters {:plexus/options {:level :error}}
- :lint-as {plexus.core/defmodel clojure.core/def}}
+ :lint-as {plexus.source/at clojure.core/do
+           plexus.core/defmodel clojure.core/def}}
