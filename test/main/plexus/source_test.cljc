@@ -2,6 +2,7 @@
   (:require [#?(:clj clojure.test :cljs cljs.test) :refer [deftest is]]
             [clojure.string :as str]
             [plexus.core :as p]
+            #?(:clj [plexus.source-impl :as source])
             #?(:clj [plexus.source :as src]))
   #?(:cljs (:require-macros [plexus.source :as src])))
 
@@ -72,3 +73,8 @@
     (let [error (caught #(p/rebuild built))]
       (is (= (meta form) (location error)))
       (is (= :plexus.impl/left (:key (ex-data error)))))))
+
+#?(:clj
+   (deftest compiled-and-interpreted-macro-inventories-match
+     (is (= (conj (set source/operations) 'at)
+            (set (keys (ns-publics 'plexus.source)))))))

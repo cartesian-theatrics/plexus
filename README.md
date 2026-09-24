@@ -64,8 +64,8 @@ is JVM-only. The optional `defmodel` convenience macro is JVM-only; portable
 code uses `(def name (p/extrude ...))`.
 
 SCI support is opt-in. Add `org.babashka/sci` (tested with `0.10.49`) and compile
-`plexus.sci` into your host. No Plexus operation macros or JVM classes need to be
-exposed to the interpreter:
+`plexus.sci` into your host. The adapter exposes the function API and a
+source-aware macro DSL on both JVM and JavaScript:
 
 ```clojure
 (require '[sci.core :as sci]
@@ -84,6 +84,27 @@ exposed to the interpreter:
      (p/frame :name :body :cross-section (m/square 10 10))
      (for [i (range 3)] (p/forward :length 2)))")
 ```
+
+Interpreted models can use `plexus.source` for automatic source locations. Use
+ordinary `require` inside SCI, including in JS hosts; `:require-macros` is only
+needed for compiled ClojureScript. Bind the interpreted filename on the host:
+
+```clojure
+(sci/binding [sci/file "model.clj"]
+  (sci/eval-string* ctx
+    "(require '[plexus.core :as p] '[plexus.source :as ps]
+              '[clj-manifold3d.core :as m])
+     (p/extrude
+       (ps/frame :name :body :cross-section (m/square 10 10))
+       (ps/forward :length 5))"))
+```
+
+The adapter registers SCI macro vars backed by portable expansion functions.
+Their `&form` provides line/column and the original expression; `sci/file` supplies
+the filename. These macros evaluate arguments once and support the same map
+options, nesting, result expressions, and explicit deferred rebuilding as the
+compiled `plexus.source` macros. The `at` wrapper is also available in SCI.
+`plexus.core` remains a macro-free API in the same context.
 
 This is a compiled host integration using SCI's
 [namespace copying API](https://github.com/babashka/sci/blob/master/API.md#copy-ns),
@@ -182,8 +203,8 @@ macros:
 ```
 
 `with-source` calls its builder immediately. Use `p/deferred` inside it when
-re-evaluation is intended. SCI supports this explicit form; `plexus.source`
-macros are an optional compiled Clojure/ClojureScript convenience.
+re-evaluation is intended. SCI supports both this explicit form and the automatic
+`plexus.source` macro DSL when configured through `plexus.sci/config`.
 
 ## Development checks
 

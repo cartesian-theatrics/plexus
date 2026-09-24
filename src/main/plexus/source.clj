@@ -1,7 +1,8 @@
 (ns plexus.source
   "Optional source-aware operation macros. Require plexus.core at runtime.
   These evaluate arguments once and delegate to the macro-free core functions."
-  (:refer-clojure :exclude [set]))
+  (:refer-clojure :exclude [set])
+  (:require [plexus.source-impl :as source]))
 
 (defn- caller-file [env]
   ;; The CLJS compiler does not bind clojure.core/*file* at macro call sites.
@@ -12,94 +13,88 @@
         *file*)
     *file*))
 
-(defn- located [form env expression]
-  `(plexus.core/with-source
-     ~(assoc (select-keys (meta form) [:line :column])
-             :file (caller-file env) :source-form (pr-str form))
-     (fn [] ~expression)))
-
 (defmacro at
   "Attach the wrapped expression's source location to its form and errors."
   [form]
-  (located (with-meta form (merge (meta &form) (meta form))) &env form))
+  (source/at &form (caller-file &env) [form]))
 
 (defmacro left [& args]
-  (located &form &env (cons 'plexus.core/left args)))
+  (source/operation 'left &form (caller-file &env) args))
 
 (defmacro right [& args]
-  (located &form &env (cons 'plexus.core/right args)))
+  (source/operation 'right &form (caller-file &env) args))
 
 (defmacro up [& args]
-  (located &form &env (cons 'plexus.core/up args)))
+  (source/operation 'up &form (caller-file &env) args))
 
 (defmacro down [& args]
-  (located &form &env (cons 'plexus.core/down args)))
+  (source/operation 'down &form (caller-file &env) args))
 
 (defmacro curve [& args]
-  (located &form &env (cons 'plexus.core/curve args)))
+  (source/operation 'curve &form (caller-file &env) args))
 
 (defmacro forward [& args]
-  (located &form &env (cons 'plexus.core/forward args)))
+  (source/operation 'forward &form (caller-file &env) args))
 
 (defmacro loft [& args]
-  (located &form &env (cons 'plexus.core/loft args)))
+  (source/operation 'loft &form (caller-file &env) args))
 
 (defmacro hull [& args]
-  (located &form &env (cons 'plexus.core/hull args)))
+  (source/operation 'hull &form (caller-file &env) args))
 
 (defmacro translate [& args]
-  (located &form &env (cons 'plexus.core/translate args)))
+  (source/operation 'translate &form (caller-file &env) args))
 
 (defmacro mirror [& args]
-  (located &form &env (cons 'plexus.core/mirror args)))
+  (source/operation 'mirror &form (caller-file &env) args))
 
 (defmacro rotate [& args]
-  (located &form &env (cons 'plexus.core/rotate args)))
+  (source/operation 'rotate &form (caller-file &env) args))
 
 (defmacro transform [& args]
-  (located &form &env (cons 'plexus.core/transform args)))
+  (source/operation 'transform &form (caller-file &env) args))
 
 (defmacro set [& args]
-  (located &form &env (cons 'plexus.core/set args)))
+  (source/operation 'set &form (caller-file &env) args))
 
 (defmacro set-meta [& args]
-  (located &form &env (cons 'plexus.core/set-meta args)))
+  (source/operation 'set-meta &form (caller-file &env) args))
 
 (defmacro branch [& args]
-  (located &form &env (cons 'plexus.core/branch args)))
+  (source/operation 'branch &form (caller-file &env) args))
 
 (defmacro frame [& args]
-  (located &form &env (cons 'plexus.core/frame args)))
+  (source/operation 'frame &form (caller-file &env) args))
 
 (defmacro save-transform [& args]
-  (located &form &env (cons 'plexus.core/save-transform args)))
+  (source/operation 'save-transform &form (caller-file &env) args))
 
 (defmacro offset [& args]
-  (located &form &env (cons 'plexus.core/offset args)))
+  (source/operation 'offset &form (caller-file &env) args))
 
 (defmacro add-ns [& args]
-  (located &form &env (cons 'plexus.core/add-ns args)))
+  (source/operation 'add-ns &form (caller-file &env) args))
 
 (defmacro result [& args]
-  (located &form &env (cons 'plexus.core/result args)))
+  (source/operation 'result &form (caller-file &env) args))
 
 (defmacro union [& args]
-  (located &form &env (cons 'plexus.core/union args)))
+  (source/operation 'union &form (caller-file &env) args))
 
 (defmacro intersection [& args]
-  (located &form &env (cons 'plexus.core/intersection args)))
+  (source/operation 'intersection &form (caller-file &env) args))
 
 (defmacro difference [& args]
-  (located &form &env (cons 'plexus.core/difference args)))
+  (source/operation 'difference &form (caller-file &env) args))
 
 (defmacro insert [& args]
-  (located &form &env (cons 'plexus.core/insert args)))
+  (source/operation 'insert &form (caller-file &env) args))
 
 (defmacro trim-by-plane [& args]
-  (located &form &env (cons 'plexus.core/trim-by-plane args)))
+  (source/operation 'trim-by-plane &form (caller-file &env) args))
 
 (defmacro to [& args]
-  (located &form &env (cons 'plexus.core/to args)))
+  (source/operation 'to &form (caller-file &env) args))
 
 (defmacro points [& args]
-  (located &form &env (cons 'plexus.core/points args)))
+  (source/operation 'points &form (caller-file &env) args))

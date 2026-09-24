@@ -63,5 +63,6 @@ Macro-free constructors cannot automatically capture their call-site source
 coordinates. `plexus.source` provides optional operation macros (and `at`) that
 preserve file, line, column, and original expression while retaining single
 argument evaluation. `plexus.core/with-source` accepts explicit locations without
-macros, including in SCI. Execution errors include the offending form and cause
-with either API. See the README for migration examples.
+macros, including in SCI. The SCI adapter also exposes `plexus.source` macros for
+automatic locations on both JVM and JS hosts. Execution errors include the
+offending form and cause with either API. See the README for migration examples.
