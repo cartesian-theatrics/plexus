@@ -1,6 +1,5 @@
 (ns plexus.schema
   (:require
-   [clj-manifold3d.core :as m]
    [malli.core :as ma]
    [plexus.impl :as impl]))
 
@@ -59,7 +58,9 @@
     [:x {:optional true} number?]
     [:y {:optional true} number?]
     [:z {:optional true} number?]
-    [:length {:optional true} number?]]
+    [:length {:optional true} number?]
+    [:n-steps {:optional true} pos-int?]
+    [:transform-step-fn {:optional true} fn?]]
    [:fn {:error/message "x, y, z, and length are mutually exclusive."}
     (fn [{:keys [x y z length]}]
       (= 1 (count (remove nil? [x y z length]))))]])

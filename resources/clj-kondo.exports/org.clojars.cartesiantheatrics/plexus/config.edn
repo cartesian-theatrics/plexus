@@ -1,0 +1,26 @@
+{:hooks {:analyze-call
+         {plexus.core/left hooks.plexus/operation
+          plexus.core/right hooks.plexus/operation
+          plexus.core/up hooks.plexus/operation
+          plexus.core/down hooks.plexus/operation
+          plexus.core/curve hooks.plexus/operation
+          plexus.core/forward hooks.plexus/operation
+          plexus.core/loft hooks.plexus/operation
+          plexus.core/hull hooks.plexus/operation
+          plexus.core/translate hooks.plexus/operation
+          plexus.core/mirror hooks.plexus/operation
+          plexus.core/rotate hooks.plexus/operation
+          plexus.core/transform hooks.plexus/operation
+          plexus.core/set hooks.plexus/operation
+          plexus.core/set-meta hooks.plexus/operation
+          plexus.core/branch hooks.plexus/operation
+          plexus.core/frame hooks.plexus/operation
+          plexus.core/save-transform hooks.plexus/operation
+          plexus.core/offset hooks.plexus/operation
+          plexus.core/add-ns hooks.plexus/operation
+          plexus.core/result hooks.plexus/operation
+          plexus.core/insert hooks.plexus/operation
+          plexus.core/trim-by-plane hooks.plexus/operation
+          plexus.core/to hooks.plexus/operation}}
+ :linters {:plexus/options {:level :error}}
+ :lint-as {plexus.core/defmodel clojure.core/def}}

@@ -1,0 +1,8 @@
+(ns lint.invalid (:require [plexus.core :as p]))
+(p/forward :length "long")
+(p/forward :x 1 :z 2)
+(p/frame :curve-radius 10)
+(p/branch :with [:body])
+(p/forward :length)
+(p/forward {:length 1 :n-steps 0})
+(p/mirror :normal [0 1])

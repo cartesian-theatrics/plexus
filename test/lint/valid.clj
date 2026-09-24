@@ -1,0 +1,10 @@
+(ns lint.valid (:require [plexus.core :as p]))
+(defn path [distance options]
+  [(p/frame :name :body)
+   (p/forward :length distance)
+   (p/forward options)
+   (p/branch :from :body (p/forward {:z 1}))
+   (p/hull (p/forward :x 2))
+   (p/hull :a :b :c)
+   (p/set-meta :length "metadata")
+   (p/result :name :body :expr (p/difference :outer :inner))])

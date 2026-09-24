@@ -18,6 +18,143 @@ A beginner friendly introduction to developing with Plexus is available [here](h
 
 This library uses [java bindings](https://github.com/SovereignShop/manifold?tab=readme-ov-file#installation) to the native library Manifold. The platform specific dependency needs to be included separately from plexus.
 
+## ClojureScript and SCI
+
+The modeling API, schemas, transforms, and geometry helpers now live in `.cljc`.
+Operations such as `frame`, `forward`, `branch`, `loft`, and `result` are ordinary
+functions returning validated form maps. Existing call syntax, nested sequences,
+`for`, threading, and CSG result trees work on both platforms. Operations can also
+be passed to `map` or `apply`, and accept an options map:
+
+```clojure
+(p/extrude
+  (p/frame {:name :body :cross-section (m/square 10 10 true)})
+  (map p/forward [{:length 2} {:length 3}]))
+```
+
+The published `clj-manifold3d` 1.1.1 dependency remains the JVM default. For JS,
+use the sibling checkout's JS/WASM bindings (the `:cljs` development alias does
+this automatically), or a release containing that API:
+
+```clojure
+org.clojars.cartesiantheatrics/clj-manifold3d {:local/root "../clj-manifold3d"}
+```
+
+Initialize the WASM backend once before modeling. In a browser, load
+`clj-manifold3d/public/wasm/manifold.js`, serve its matching `manifold.wasm`, and:
+
+```clojure
+(require '[clj-manifold3d.core :as m] '[plexus.core :as p])
+
+(-> (m/init! {:wasm-url "/wasm/manifold.wasm"})
+    (.then (fn [_]
+             (p/extrude
+               (p/frame :name :body :cross-section (m/square 10 10))
+               (p/forward :length 5)))))
+```
+
+Node hosts can pass an Emscripten `:factory` and `:wasm-binary` to `m/init!`;
+see `test/cljs/plexus/test_runner.cljs`. Modeling is synchronous after initialization.
+JS geometry owns WASM resources: use `m/dispose!` when finished, or
+`m/with-disposal` around a synchronous computation that returns only copied data.
+Use `p/get-model` to pass an extrusion's geometry to the JS Manifold API.
+`export` delegates to the backend; formats, return values, and asynchronous I/O
+follow that backend. `export-models` (namespace scanning and JVM filesystem I/O)
+is JVM-only. The optional `defmodel` convenience macro is JVM-only; portable
+code uses `(def name (p/extrude ...))`.
+
+SCI support is opt-in. Add `org.babashka/sci` (tested with `0.10.49`) and compile
+`plexus.sci` into your host. No Plexus operation macros or JVM classes need to be
+exposed to the interpreter:
+
+```clojure
+(require '[sci.core :as sci]
+         '[plexus.sci :as ps]
+         '[clj-manifold3d.core :as m])
+
+;; Initialize WASM first in a JS host. Expose the geometry functions you need.
+(def ctx
+  (sci/init
+    (assoc-in ps/config [:namespaces 'clj-manifold3d.core]
+              {'square m/square})))
+
+(sci/eval-string* ctx
+  "(require '[plexus.core :as p] '[clj-manifold3d.core :as m])
+   (p/extrude
+     (p/frame :name :body :cross-section (m/square 10 10))
+     (for [i (range 3)] (p/forward :length 2)))")
+```
+
+This is a compiled host integration using SCI's
+[namespace copying API](https://github.com/babashka/sci/blob/master/API.md#copy-ns),
+not a promise that all implementation source can be loaded directly into a bare
+SCI/nbb environment. Normal Plexus use does not require SCI.
+
+## Rebuilding and evaluation
+
+Function arguments are evaluated once at form construction. Previously the
+operation macros evaluated them during validation and again during execution,
+and captured implicit thunks for `rebuild`. To rebuild with fresh values, defer
+those forms explicitly. This works with dynamic bindings, atoms, and SCI:
+
+```clojure
+(def length (atom 5))
+(def model
+  (p/extrude
+    (p/frame :name :body :cross-section (m/square 2 2))
+    (p/deferred #(p/forward :length @length))))
+
+(reset! length 10)
+(p/rebuild model)
+```
+
+A deferred function may return a single form, nested sequences, or nil. Wrap an
+entire `for` in `deferred` to regenerate its sequence on every build. Ordinary
+forms retain their captured values. This explicit thunk is the one syntax change
+needed for implicit re-evaluation: ordinary functions cannot capture unevaluated
+arguments. Applications that invoked the internal callable `Form` objects should
+instead treat forms as data; the internal `Form` type and `defop` macro are removed.
+
+## Validation without operation macros
+
+Malli validates options when each operation is constructed, including inside SCI.
+Failures carry the operation and form in `ex-data`. This preserves the runtime
+checks the old macros emitted; those macros did not statically validate values.
+
+Exported [clj-kondo hooks](https://github.com/clj-kondo/clj-kondo/blob/master/doc/hooks.md)
+add editor/CI checks without changing the runtime API. They catch missing required
+options, missing keyword values, conflicting `forward` axes, and invalid literal
+numbers, names, normals, step counts, and enum values. Import the library's config
+with clj-kondo's normal dependency scan (`clj-kondo --lint "$(clojure -Spath)" --dependencies --copy-configs`).
+For this checkout, the hook directory can be used directly:
+
+```sh
+clj-kondo --lint your-model.clj \
+  --config-dir resources/clj-kondo.exports/org.clojars.cartesiantheatrics/plexus
+```
+
+The hooks leave ordinary symbol analysis intact and do not execute model code.
+Computed options maps and nonliteral values still need runtime validation; the
+hooks are not a general type checker. Open-ended defaults and metadata remain
+supported. Runtime validation no longer has macro call-site metadata; attach
+metadata to form maps when needed, or use the linter for source locations.
+
+## Development checks
+
+```sh
+clojure -M:dev:test                 # Published JVM dependencies
+clojure -M:dev:test:sci             # Also test interpreted models
+clojure -M:local-dev:test:sci       # Sibling bindings and local native jar
+clojure -M:cljs -m shadow.cljs.devtools.cli release test
+node target/cljs-tests.js          # Real WASM geometry and SCI, advanced compilation
+python3 scripts/test-lint.py       # Requires clj-kondo on PATH
+```
+
+The JS runner loads the sibling checkout's `public/wasm/manifold.js` and matching
+WASM binary. Shared tests cover CSG, branches, all four curves, gaps, loft sampling,
+hulls, insertion, targeting, points, transforms, validation, and deferred rebuilding.
+The existing JVM tests, including the forward sampling regressions, remain enabled.
+
 # Projects Using Plexus
 
 A Simple rapidly printable hydroponic tower:

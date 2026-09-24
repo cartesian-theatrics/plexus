@@ -24,7 +24,7 @@
                        (-> deps-data :aliases :clj-prod :extra-deps))]
     (jar/jar 'org.clojars.cartesiantheatrics/plexus {:mvn/version version}
              {:out-path                (format "target/plexus-%s.jar" version)
-              :paths                   ["src/main"]
+              :paths                   ["src/main" "resources"]
               :deps                    deps
               :mvn/repos               '{"clojars" {:url "https://repo.clojars.org/"}}
               :exclusion-predicate     jar/default-exclusion-predicate
