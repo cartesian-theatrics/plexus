@@ -6,3 +6,6 @@
 (p/forward :length)
 (p/forward {:length 1 :n-steps 0})
 (p/mirror :normal [0 1])
+
+(p/on-surface :surface nil :direction [1 0 0])
+(p/on-surface :surface nil :origin [0 0] :direction :left :step-size 0)

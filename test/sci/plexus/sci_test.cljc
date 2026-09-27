@@ -127,3 +127,28 @@
     (is (= {:file "deferred.clj" :line 5 :column 16 :source-form "(s/left :angle 1)"}
            (select-keys error [:file :line :column :source-form])))
     (is (= :plexus.impl/left (:key error)))))
+
+(deftest interpreted-surface-navigation-and-source-errors
+  (let [ctx (sci/init (assoc-in ps/config [:namespaces 'clj-manifold3d.core]
+                               {'cube m/cube 'square m/square 'get-properties m/get-properties}))
+        result (eval-file ctx "surface.clj"
+                 "(require '[plexus.core :as p] '[plexus.source :as s]
+                           '[clj-manifold3d.core :as m])
+                  (def surface (p/surface (m/cube 10 10 10)))
+                  (def model
+                    (p/extrude
+                      (s/frame :name :path :cross-section (m/square 1 1 true))
+                      (s/on-surface :surface surface :origin [2 3 10] :direction [1 0 0])
+                      (s/forward :length 2)
+                      (s/off-surface)))
+                  (:volume (m/get-properties (p/get-model model :path)))")
+        error (eval-file ctx "surface-error.clj"
+                (capture-code
+                  "(p/extrude (s/frame :name :path)
+                     (s/on-surface :surface surface :origin [9 9 10] :direction [1 1 0])
+                     (s/forward :length 4))"))]
+    (is (< (#?(:clj Math/abs :cljs js/Math.abs) (- result 2)) 1e-5))
+    (is (= :vertex-singularity (:reason error)))
+    (is (= :plexus.impl/forward (:key error)))
+    (is (= "surface-error.clj" (:file error)))
+    (is (= "(s/forward :length 4)" (:source-form error)))))

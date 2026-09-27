@@ -1,6 +1,7 @@
 (ns plexus.schema
   (:require
    [malli.core :as ma]
+   [plexus.surface :as surface]
    [plexus.impl :as impl]))
 
 (def curve-schema
@@ -51,6 +52,15 @@
 
 (def any-map-schema
   [:map])
+
+(def on-surface-schema
+  [:map
+   [:surface :surface]
+   [:origin [:fn surface/v3?]]
+   [:direction [:fn surface/v3?]]
+   [:depth {:optional true} [:fn surface/finite?]]
+   [:step-size {:optional true} [:and [:fn surface/finite?] [:fn pos?]]]
+   [:to {:optional true} [:sequential [:or keyword? string?]]]])
 
 (def forward-schema
   [:and

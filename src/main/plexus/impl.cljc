@@ -4,6 +4,7 @@
    [malli.core :as ma]
    [clj-manifold3d.core :as m]
    [plexus.utils :as u]
+   [plexus.surface :as surface]
    [plexus.transforms :as tf]))
 
 (declare extrude*)
@@ -80,6 +81,7 @@
     :extrusion (ma/-simple-schema {:type :extrusion :pred extrusion?})
     :manifold (ma/-simple-schema {:type :manifold :pred m/manifold?})
     :cross-section (ma/-simple-schema {:type :cross-section :pred m/cross-section?})
+    :surface (ma/-simple-schema {:type :surface :pred #(or (surface/surface? %) (m/manifold? %))})
     :transform (ma/-simple-schema {:type :transform :pred tf/transform?})}))
 
 (def get-schema-validator
@@ -184,6 +186,32 @@
     (recur (attach-source (meta form) (form)))
     form))
 
+(defn- surface-frame [frame cursor]
+  (assoc frame :surface-cursor cursor
+         :segment-transform (m/compose-frames (m/invert-frame (:frame-transform frame))
+                                               (surface/frame cursor))))
+
+(defn- surface-forward [frame form frame-id axis distance]
+  (when-let [option (first (filter #(some? (get form %)) [:model :transform-step-fn :twist]))]
+    (throw (ex-info "Surface forward does not support this option" {:option option})))
+  (let [{:keys [center branch? n-steps gap props]} form
+        original (:surface-cursor frame)
+        start (if center (peek (surface/sample original axis (- (/ distance 2)) n-steps)) original)
+        samples (surface/sample start axis distance n-steps)
+        inverse (m/invert-frame (:frame-transform frame))
+        transforms (mapv #(m/compose-frames inverse (surface/frame % axis)) samples)
+        end (surface-frame frame (peek samples))
+        cross-section (when-not (or (true? gap)
+                                     (and (sequential? gap) (contains? (set gap) frame-id)))
+                        (:cross-section frame))
+        manifold (when (and cross-section (> (count transforms) 1) (not (zero? distance)))
+                   (m/loft (mapv (fn [tf] {:cross-section cross-section :frame tf})
+                                 (if (neg? distance) (vec (rseq transforms)) transforms))))]
+    (update (if branch? frame end) :segments conj
+            (with-meta (assoc (Segment. (first transforms) (:segment-transform end) transforms cross-section manifold true)
+                              :surface-transforms (mapv #(surface/frame % axis) samples))
+              (merge (meta frame) props)))))
+
 (defn extrude*
   ([forms]
    (extrude* {:current-frame-ids #{}
@@ -240,7 +268,10 @@
                                                          :segment-transform (m/frame 1)
                                                          :frame-transform default-frame-transform))
                                           (select-keys form [:name :cross-section :curve-radius])))
-                             (or (:meta form) {}))]
+                             (or (:meta form) {}))
+                     frame (if-let [cursor (:surface-cursor default-frame)]
+                             (surface-frame frame cursor)
+                             (dissoc frame :surface-cursor))]
                  (recur (cond-> (-> state
                                     (assoc :default-frame frame-id)
                                     (update :current-frame-ids conj frame-id))
@@ -248,6 +279,29 @@
                           )
                         forms
                         (assoc frames frame-id frame)
+                        result-forms))
+
+               :plexus.impl/on-surface
+               (let [prepared (if (surface/surface? (:surface form)) (:surface form)
+                                  (surface/prepare (:surface form)))
+                     cursor (surface/attach prepared form)
+                     apply-to (if-let [to (:to form)] (set to)
+                                  (conj current-frame-ids (:default-frame state)))]
+                 (recur state forms
+                        (reduce (fn [frames id]
+                                  (when-not (get frames id)
+                                    (throw (ex-info "Unknown surface frame" {:frame id})))
+                                  (update frames id surface-frame cursor)) frames apply-to)
+                        result-forms))
+
+               :plexus.impl/off-surface
+               (let [apply-to (if-let [to (:to form)] (set to)
+                                  (conj current-frame-ids (:default-frame state)))]
+                 (recur state forms
+                        (reduce (fn [frames id]
+                                  (when-not (get frames id)
+                                    (throw (ex-info "Unknown surface frame" {:frame id})))
+                                  (update frames id dissoc :surface-cursor)) frames apply-to)
                         result-forms))
 
                :plexus.impl/forward
@@ -264,7 +318,9 @@
                            (let [frame (get frames frame-id)]
                              (assoc frames
                                     frame-id
-                                    (let [start-transform (cond-> (:segment-transform frame)
+                                    (if (:surface-cursor frame)
+                                      (surface-forward frame form frame-id axis length)
+                                      (let [start-transform (cond-> (:segment-transform frame)
                                                             center (m/translate [0 0 (- (/ length 2))])
                                                             (= axis :x) (tf/rotate :x (/ u/pi 2))
                                                             (= axis :y) (tf/rotate :y (- (/ u/pi 2))))
@@ -291,7 +347,7 @@
                                                               (when extrusion
                                                                 (m/transform extrusion start-transform))
                                                               true)
-                                                    (merge (meta frame) props))))))))
+                                                    (merge (meta frame) props)))))))))
                          frames
                          apply-to)
                         result-forms))
@@ -399,6 +455,8 @@
                         (reduce
                          (fn [frames frame-id]
                            (let [frame (get frames frame-id)
+                                 _ (when (:surface-cursor frame)
+                                     (throw (ex-info "Surface curves require alternating rotate :y and forward; use off-surface for spatial curves" {})))
                                  curve-radius (or curve-radius
                                                   (:curve-radius frame)
                                                   (throw (ex-info "No :curve-radius defined for frame or segment." {})))
@@ -468,9 +526,14 @@
                            (let [frame (get frames frame-id)]
                              (assoc frames
                                     frame-id
-                                    (if global?
-                                      (update frame :segment-transform #(tf/set-translation % [(or x 0) (or y 0) (or z 0)]))
-                                      (update frame :segment-transform m/translate [(or x 0) (or y 0) (or z 0)])))))
+                                    (if-let [cursor (:surface-cursor frame)]
+                                      (do
+                                        (when global?
+                                          (throw (ex-info "Global translation requires off-surface first" {})))
+                                        (surface-frame frame (surface/move cursor (or x 0) (or y 0) (or z 0))))
+                                      (if global?
+                                        (update frame :segment-transform #(tf/set-translation % [(or x 0) (or y 0) (or z 0)]))
+                                        (update frame :segment-transform m/translate [(or x 0) (or y 0) (or z 0)]))))))
                          frames
                          apply-to)
                         result-forms))
@@ -488,9 +551,14 @@
                            (let [frame (get frames frame-id)]
                              (assoc frames
                                     frame-id
-                                    (update frame :segment-transform m/rotate [(* 1 (or x 0))
+                                    (if-let [cursor (:surface-cursor frame)]
+                                      (do
+                                        (when (or (not (zero? (or x 0))) (not (zero? (or z 0))))
+                                          (throw (ex-info "Surface frames turn with rotate :y; use off-surface before tilting" {})))
+                                        (surface-frame frame (surface/turn cursor (or y 0))))
+                                      (update frame :segment-transform m/rotate [(* 1 (or x 0))
                                                                                (* 1 (or y 0))
-                                                                               (* 1 (or z 0))]))))
+                                                                               (* 1 (or z 0))])))))
                          frames
                          apply-to)
                         result-forms))
@@ -608,7 +676,9 @@
                         forms
                         (reduce
                          (fn [frames frame-id]
-                           (let [frame (get frames frame-id)]
+                           (let [frame (get frames frame-id)
+                                 _ (when (:surface-cursor frame)
+                                     (throw (ex-info "Replacing a surface transform requires off-surface first" {})))]
                              (assoc frames
                                     frame-id
                                     (assoc frame
@@ -622,6 +692,8 @@
 
                :plexus.impl/insert
                (let [{:keys [extrusion models at ns end-frame]} form
+                     _ (when (and end-frame (some :surface-cursor (vals frames)))
+                         (throw (ex-info "insert :end-frame requires off-surface first" {})))
                      default-frame-id (:default-frame state)
                      at (or at default-frame-id)
                      base-frame (get frames at)
@@ -772,9 +844,8 @@
   ([extrusion select-fn meta-props]
    (vec (for [[_ frame] (:frames extrusion)
               [i seg] (map-indexed list (:segments frame))
-              :let [tfs (if (zero? i)
-                          (:all-transforms seg)
-                          (next (:all-transforms seg)))
+              :let [samples (or (:surface-transforms seg) (:all-transforms seg))
+                    tfs (if (zero? i) samples (next samples))
                     meta-fn (if meta-props
                               (fn [x]
                                 (with-meta x (select-keys (meta seg) meta-props)))
@@ -789,8 +860,7 @@
   ([extrusion]
    (vec (for [[_ frame] (:frames extrusion)
               [i seg] (map-indexed list (:segments frame))
-              :let [tfs (if (zero? i)
-                          (:all-transforms seg)
-                          (next (:all-transforms seg)))]
+              :let [samples (or (:surface-transforms seg) (:all-transforms seg))
+                    tfs (if (zero? i) samples (next samples))]
               tf tfs]
           tf))))

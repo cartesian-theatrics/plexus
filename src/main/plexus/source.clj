@@ -98,3 +98,9 @@
 
 (defmacro points [& args]
   (source/operation 'points &form (caller-file &env) args))
+
+(defmacro on-surface [& args]
+  (source/operation 'on-surface &form (caller-file &env) args))
+
+(defmacro off-surface [& args]
+  (source/operation 'off-surface &form (caller-file &env) args))

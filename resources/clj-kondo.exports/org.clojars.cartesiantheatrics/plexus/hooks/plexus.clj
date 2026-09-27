@@ -5,11 +5,12 @@
   {'frame #{:name} 'branch #{:from} 'result #{:name :expr}
    'insert #{:extrusion} 'transform #{:replace} 'mirror #{:normal}
    'offset #{:delta} 'add-ns #{:namespace} 'save-transform #{:frame}
+   'on-surface #{:surface :origin :direction}
    'to #{:models}})
 
 (def numeric-options
   #{:x :y :z :length :angle :arc-length :curve-radius :roll :delta :simplify
-    :origin-offset :twist})
+    :origin-offset :twist :depth})
 
 (defn finding! [node message]
   (api/reg-finding! (assoc (meta node) :type :plexus/options :message message)))
@@ -58,7 +59,8 @@
                      (= :n-steps k) (or (nil? v) (pos-int? v))
                      (= :cs k) (int? v)
                      (#{:name :from :namespace :frame} k) (or (keyword? v) (string? v))
-                     (= :normal k) (and (vector? v) (= 3 (count v)) (every? number? v))
+                     (= :step-size k) (and (number? v) (pos? v))
+                     (or (#{:normal :origin} k) (and (= op 'on-surface) (= k :direction))) (and (vector? v) (= 3 (count v)) (every? number? v))
                      (= :global? k) (boolean? v)
                      (= :direction k) (contains? #{:left :right :up :down} v)
                      (= :join-type k) (contains? #{:square :round :miter} v)

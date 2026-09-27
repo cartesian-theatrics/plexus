@@ -120,6 +120,16 @@ This is a compiled host integration using SCI's
 not a promise that all implementation source can be loaded directly into a bare
 SCI/nbb environment. Normal Plexus use does not require SCI.
 
+## Walking on a surface
+
+Attach a frame with `on-surface` to make `forward` sweep along a Manifold.
+Local Z walks forward, X walks sideways, and Y controls depth along the outward
+normal. Turn with `rotate :y`, and return to ordinary space with `off-surface`.
+The portable implementation also works through the SCI macro DSL.
+
+See [surface navigation](docs/surface-navigation.md) for the API, geometric limits,
+and a [runnable branching ribbon example](src/examples/surface_navigation.clj).
+
 ## Rebuilding and evaluation
 
 Function arguments are evaluated once at form construction. Previously the

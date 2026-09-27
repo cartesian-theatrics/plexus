@@ -1,5 +1,7 @@
 {:hooks {:analyze-call
-         {plexus.core/left hooks.plexus/operation
+         {plexus.core/on-surface hooks.plexus/operation
+          plexus.core/off-surface hooks.plexus/operation
+          plexus.core/left hooks.plexus/operation
           plexus.core/right hooks.plexus/operation
           plexus.core/up hooks.plexus/operation
           plexus.core/down hooks.plexus/operation
@@ -22,6 +24,8 @@
           plexus.core/insert hooks.plexus/operation
           plexus.core/trim-by-plane hooks.plexus/operation
           plexus.core/to hooks.plexus/operation
+          plexus.source/on-surface hooks.plexus/operation
+          plexus.source/off-surface hooks.plexus/operation
           plexus.source/left hooks.plexus/operation
           plexus.source/right hooks.plexus/operation
           plexus.source/up hooks.plexus/operation

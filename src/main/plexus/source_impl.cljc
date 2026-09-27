@@ -4,7 +4,7 @@
 (def operations
   '[left right up down curve forward loft hull translate mirror rotate transform
     set set-meta branch frame save-transform offset add-ns result union
-    intersection difference insert trim-by-plane to points])
+    intersection difference insert trim-by-plane to points on-surface off-surface])
 
 (defn located [form file expression]
   (list 'plexus.core/with-source

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Add portable surface navigation: prepared surfaces, attachment/detachment,
+  geodesic forward and sideways walks, normal depth, heading turns, and bent sweeps.
+- Preserve surface cursors through branches and rebuilds, with SCI source macros
+  and static option checks. See [surface navigation](docs/surface-navigation.md)
+  for geometric limits and supported operations.
+
 ## 2.0.0 — 2026-09-24
 
 Plexus now supports Clojure, ClojureScript/WASM, and optional SCI interpretation

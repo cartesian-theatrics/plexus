@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [set])
   (:require #?(:clj [clojure.java.io :as io])
             [plexus.schema :as schema]
+            [plexus.surface :as surface]
             [clj-manifold3d.core :as m]
             [plexus.impl :as impl]))
 
@@ -22,6 +23,27 @@
   (when-not (fn? f)
     (throw (ex-info "deferred expects a zero-argument function" {:value f})))
   f)
+
+(defn surface
+  "Prepare a reusable immutable navigation surface from a Manifold. Copies mesh
+  data; the original geometry may subsequently be disposed. No native handle is retained."
+  [manifold]
+  (surface/prepare manifold))
+
+(defn on-surface
+  "Attach active frames (or :to frames) to a Manifold or prepared :surface.
+  :origin is snapped once to the nearest triangle; :direction is the desired
+  world-space forward tangent. Local Z walks forward, X sideways, and Y changes
+  :depth (positive outward, default 0). :step-size defaults to 1 model unit.
+  Heading is parallel transported across edges. rotate :y turns on the surface."
+  [& opts]
+  (schema/validate-form (cons :plexus.impl/on-surface opts) schema/on-surface-schema))
+
+(defn off-surface
+  "Return active frames (or :to frames) to ordinary space, retaining their current
+  position and orientation. Subsequent movement no longer follows the surface."
+  [& opts]
+  (schema/validate-form (cons :plexus.impl/off-surface opts) schema/any-map-schema))
 
 (defn left
   "Extrude a left curve. Rotate-extrudes about a y-axis offset
@@ -77,6 +99,8 @@
 
 (defn forward
   "Extrude the model set forward, relative to current frame.
+  In on-surface mode, Z walks forward, X sideways, and Y changes depth; geometry
+  is lofted along the walked samples, including every triangle crossing.
 
   opts:
 

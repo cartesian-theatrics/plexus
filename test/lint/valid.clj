@@ -9,3 +9,7 @@
    (p/hull :a :b :c)
    (p/set-meta :length "metadata")
    (p/result :name :body :expr (p/difference :outer :inner))])
+
+(defn surface-path [surface]
+  [(p/on-surface :surface surface :origin [1 2 3] :direction [1 0 0] :depth -1 :step-size 0.5)
+   (p/off-surface :to [:body])])
