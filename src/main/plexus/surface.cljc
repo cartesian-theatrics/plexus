@@ -21,8 +21,30 @@
       (throw (ex-info "Surface direction must be finite, nonzero, and tangent" {:vector v})))
     (scale v (/ n))))
 
-(defrecord Surface [positions faces neighbors epsilon])
+(defrecord Surface [positions faces neighbors epsilon corner-normals])
 (defn surface? [x] (instance? Surface x))
+
+(defn- smooth-normals [positions faces neighbors]
+  ;; Match native SurfaceUV: angle-weighted corner normals, connected through
+  ;; physical halfedges, with creases over 60 degrees kept sharp.
+  (let [parent (atom (vec (range (* 3 (count faces)))))
+        root (fn [i] (loop [i i] (let [p (get @parent i)] (if (= p i) i (recur p)))))
+        join! (fn [a b] (swap! parent assoc (root a) (root b)))]
+    (doseq [f (range (count faces)) i (range 3)
+            :let [[other j] (get-in neighbors [f i])]
+            :when (and (< f other) (>= (dot (:normal (faces f)) (:normal (faces other))) 0.5))]
+      (join! (+ (* 3 f) i) (+ (* 3 other) (mod (inc j) 3)))
+      (join! (+ (* 3 f) (mod (inc i) 3)) (+ (* 3 other) j)))
+    (let [sums (reduce (fn [sums [f i]]
+                         (let [vs (:vertices (faces f)) p (positions (vs i))
+                               a (unit (sub (positions (vs (mod (inc i) 3))) p))
+                               b (unit (sub (positions (vs (mod (+ i 2) 3))) p))
+                               angle (#?(:clj Math/atan2 :cljs js/Math.atan2) (length (cross a b)) (dot a b))]
+                           (update sums (root (+ (* 3 f) i)) (fnil add [0 0 0])
+                                   (scale (:normal (faces f)) angle))))
+                       {} (for [f (range (count faces)) i (range 3)] [f i]))]
+      (mapv (fn [f] (mapv #(unit (get sums (root (+ (* 3 f) %)))) (range 3)))
+            (range (count faces))))))
 
 (defn prepare
   "Copy a Manifold into a reusable, immutable surface. Property seams are joined
@@ -60,7 +82,8 @@
                                   (range 3))) faces)
           lo (apply mapv min positions)
           hi (apply mapv max positions)]
-      (->Surface positions faces neighbors (max 1e-9 (* 1e-9 (length (sub hi lo))))))))
+      (->Surface positions faces neighbors (max 1e-9 (* 1e-9 (length (sub hi lo))))
+                 (smooth-normals positions faces neighbors)))))
 
 (defn normal [{:keys [surface face]}] (get-in surface [:faces face :normal]))
 (defn bary [{:keys [positions faces]} face p]
@@ -208,15 +231,70 @@
     (assoc cursor :forward (unit (add (scale f (#?(:clj Math/cos :cljs js/Math.cos) angle))
                                       (scale r (#?(:clj Math/sin :cljs js/Math.sin) angle)))))))
 
+(defn frame-normal
+  "Continuous interpolated normal within a smooth fan; creases remain sharp.
+  Navigation itself still uses the exact triangle normals."
+  [{:keys [surface face point]}]
+  (unit (reduce add (map scale (get-in surface [:corner-normals face])
+                         (bary surface face point)))))
+
+(defn frame-columns [cursor axis]
+  (let [y (frame-normal cursor)
+        z (unit (sub (:forward cursor) (scale y (dot (:forward cursor) y))))
+        x (cross y z)
+        p (add (:point cursor) (scale y (:depth cursor)))]
+     (case axis
+       :z [x y z p]
+       :x [(scale z -1) y x p]
+       :y [x (scale z -1) y p])))
+
 (defn frame
   ([cursor] (frame cursor :z))
-  ([cursor axis]
-   (let [y (normal cursor) z (:forward cursor) x (cross y z)
-         p (add (:point cursor) (scale y (:depth cursor)))]
-     (case axis
-       :z (m/frame x y z p)
-       :x (m/frame (scale z -1) y x p)
-       :y (m/frame x (scale z -1) y p)))))
+  ([cursor axis] (apply m/frame (frame-columns cursor axis))))
+
+(defn sweep-samples
+  "Coalesce nearby stations that invert a profile within a smooth fan. Reject
+  folds across sharp creases, endpoint collapse, or coalescing beyond twice the
+  requested spacing. Navigation samples are left unchanged. This is not a test
+  for collisions between distant portions of a path."
+  [samples axis distance profile n-steps]
+  (let [sign (if (neg? distance) -1 1)
+        epsilon (get-in (first samples) [:surface :epsilon])
+        columns (mapv #(frame-columns % axis) samples)
+        sharp (vec (reductions + 0 (map (fn [a b] (if (< (dot (normal a) (normal b)) 0.5) 1 0))
+                                       samples (next samples))))
+        stations (vec (reductions + 0 (map (fn [a b]
+                                             (if (= axis :y) (abs (- (:depth b) (:depth a)))
+                                                 (length (sub (:point b) (:point a)))))
+                                           samples (next samples))))
+        limit (* 2 (if n-steps (/ (abs distance) n-steps) (:step-size (first samples))))
+        fold (fn [i j]
+               (let [[x0 y0 z0 p0] (columns i) [x1 y1 z1 p1] (columns j)]
+                 (first (filter
+                         (fn [[u v]]
+                           (let [a (add p0 (add (scale x0 u) (scale y0 v)))
+                                 b (add p1 (add (scale x1 u) (scale y1 v)))
+                                 delta (sub b a)]
+                             (<= (min (* sign (dot delta z0)) (* sign (dot delta z1))) epsilon)))
+                         profile))))
+        fail! (fn [i j vertex]
+                (throw (ex-info "Surface sweep folds or collapses at the profile; reduce the profile/depth or smooth the support"
+                                {:reason :surface-sweep-fold :sample-index i :profile-point vertex
+                                 :point (:point (samples i)) :face (:face (samples i))
+                                 :next-face (:face (samples j)) :axis axis})))]
+    (loop [kept [0] j 1]
+      (if (= j (count samples)) (mapv samples kept)
+          (let [i (peek kept)
+                vertex (fold i j)]
+            (when (> (- (stations j) (stations i)) (+ limit epsilon))
+              (fail! i j vertex))
+            (if-not vertex
+              (recur (conj kept j) (inc j))
+              (cond
+                (> (sharp j) (sharp i)) (fail! i j vertex)
+                (< j (dec (count samples))) (recur kept (inc j))
+                (> (count kept) 1) (recur (pop kept) j)
+                :else (fail! i j vertex))))))))
 
 (defn sample [cursor axis distance n-steps]
   (when-not (finite? distance) (throw (ex-info "Surface distance must be finite" {})))

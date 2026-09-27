@@ -133,7 +133,7 @@
     (is (near-vector? (:point end) (:point sampled)))
     (is (near-vector? (:forward end) (:forward sampled)))
     (is (every? #(< 9.7 (s/length (:point %)) 10.00001) path))
-    (is (near-vector? (s/add (:point end) (s/scale (s/normal end) -0.2))
+    (is (near-vector? (s/add (:point end) (s/scale (s/frame-normal end) -0.2))
                       (tf/translation-vector (s/frame end))))))
 
 (deftest surface-loft-and-world-space-points

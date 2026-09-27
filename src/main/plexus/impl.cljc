@@ -198,12 +198,19 @@
         original (:surface-cursor frame)
         start (if center (peek (surface/sample original axis (- (/ distance 2)) n-steps)) original)
         samples (surface/sample start axis distance n-steps)
-        inverse (m/invert-frame (:frame-transform frame))
-        transforms (mapv #(m/compose-frames inverse (surface/frame % axis)) samples)
         end (surface-frame frame (peek samples))
         cross-section (when-not (or (true? gap)
                                      (and (sequential? gap) (contains? (set gap) frame-id)))
                         (:cross-section frame))
+        sweep-samples (if (and cross-section (> (count samples) 1))
+                        (let [profile #?(:clj (with-open [polygons (m/to-polygons cross-section)]
+                                               (vec (for [polygon polygons vertex polygon]
+                                                      [(.x vertex) (.y vertex)])))
+                                         :cljs (vec (mapcat identity (m/to-polygons cross-section))))]
+                          (surface/sweep-samples samples axis distance profile n-steps))
+                        samples)
+        inverse (m/invert-frame (:frame-transform frame))
+        transforms (mapv #(m/compose-frames inverse (surface/frame % axis)) sweep-samples)
         manifold (when (and cross-section (> (count transforms) 1) (not (zero? distance)))
                    (m/loft (mapv (fn [tf] {:cross-section cross-section :frame tf})
                                  (if (neg? distance) (vec (rseq transforms)) transforms))))]

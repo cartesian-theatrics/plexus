@@ -20,7 +20,7 @@
     (ps/forward :length 12)
     ;; Increasing depth moves away from the same surface point.
     (ps/translate :y 1)
-    (ps/forward :length 8)
+    (ps/forward :length 4)
     (ps/save-transform :frame :ribbon :name :end)))
 
 (def preview

@@ -5,6 +5,7 @@
             [plexus.sci-test]
             [plexus.source-test]
             [plexus.surface-test]
+            [plexus.concavity-test]
             [goog.object :as gobj]))
 
 (defmethod t/report [::t/default :end-run-tests] [result]
@@ -16,5 +17,5 @@
         bytes ((gobj/get (js/require "node:fs") "readFileSync")
                (resolve "target/wasm/manifold.wasm"))]
     (-> (m/init! {:factory factory :wasm-binary bytes})
-        (.then (fn [_] (m/with-disposal #(run-tests 'plexus.portable-test 'plexus.sci-test 'plexus.source-test 'plexus.surface-test))))
+        (.then (fn [_] (m/with-disposal #(run-tests 'plexus.portable-test 'plexus.sci-test 'plexus.source-test 'plexus.surface-test 'plexus.concavity-test))))
         (.catch (fn [e] (js/console.error e) (gobj/set js/process "exitCode" 1))))))

@@ -152,3 +152,20 @@
     (is (= :plexus.impl/forward (:key error)))
     (is (= "surface-error.clj" (:file error)))
     (is (= "(s/forward :length 4)" (:source-form error)))))
+
+(deftest interpreted-concave-fold-error-retains-source
+  (let [support (m/extrude (m/cross-section [[[-10 -5] [10 -5] [10 10] [0 0] [-10 10]]]) 10)
+        ctx (sci/init (assoc-in ps/config [:namespaces 'fixtures]
+                               {'support support 'profile (m/square 0.2 0.2 true)}))
+        error (eval-file ctx "concave.clj"
+                (str "(require '[plexus.core :as p] '[plexus.source :as s] '[fixtures :as g])\n"
+                     (capture-code
+                       "(p/extrude
+                          (s/frame :name :path :cross-section g/profile)
+                          (s/on-surface :surface g/support :origin [-4 4 3.17]
+                                        :direction [1 -1 0] :depth 0.5)
+                          (s/forward :length 12))")))]
+    (is (= :surface-sweep-fold (:reason error)))
+    (is (= :plexus.impl/forward (:key error)))
+    (is (= "concave.clj" (:file error)))
+    (is (= "(s/forward :length 12)" (:source-form error)))))

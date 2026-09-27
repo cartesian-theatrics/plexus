@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Validate concave navigation and sweeps on bowls, torus interiors, V-valleys,
+  and narrow trenches. Smooth frame normals within physical face fans, coalesce
+  stations that would fold locally, and reject unsafe sweeps with source-aware
+  `:surface-sweep-fold` errors.
+
 - Add portable surface navigation: prepared surfaces, attachment/detachment,
   geodesic forward and sideways walks, normal depth, heading turns, and bent sweeps.
 - Preserve surface cursors through branches and rebuilds, with SCI source macros

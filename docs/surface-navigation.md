@@ -21,7 +21,7 @@ walked path. The API works in Clojure, ClojureScript/WASM, and the SCI adapter.
     (p/rotate :y 0.7)
     (p/forward :length 12)
     (p/translate :y 1)
-    (p/forward :length 8)
+    (p/forward :length 4)
     (p/save-transform :frame :ribbon :name :end)))
 ```
 
@@ -60,8 +60,9 @@ outgoing tangent is an error.
 | `off-surface` | Keep the current position and orientation, resume ordinary spatial operations |
 
 All distances are in model units and may be negative. Tangential distance is
-measured on the reference surface, regardless of depth. Depth is an absolute
-offset from that surface, not a repeated nearest-point projection.
+measured on the reference surface, regardless of depth. Depth offsets use the
+interpolated frame normal in smooth regions and the face normal at sharp creases;
+they do not repeatedly project onto the nearest surface.
 
 `:to` targets specific frames. Without it, attachment and detachment affect the
 active frames and the default frame. New frames inherit the default frame's
@@ -71,8 +72,11 @@ ordinary world-space transform suitable for placing another model.
 
 `forward` supports `:gap`, `:center`, `:branch?`, and `:n-steps`. `:step-size`
 (default 1) supplies the sampling interval when `:n-steps` is absent or nil.
-Triangle crossings are always included, even with `:n-steps 1`. Existing `loft`
-can interpolate between changing cross-sections along these samples. Surface
+Navigation samples always include triangle crossings, even with `:n-steps 1`.
+For geometry, closely spaced stations in smooth regions are coalesced if their
+profile would fold; the resulting spacing cannot exceed twice the requested
+interval. Existing `loft` can interpolate between changing cross-sections along
+the retained sweep stations. Surface
 path samples returned by `points` use world coordinates, including when the
 frame was created under a nonidentity transform.
 
@@ -96,13 +100,26 @@ disconnected sheets. Native UV mapping uses plane cuts; Plexus instead transport
 the heading across edges. See also Geometry Central's description of
 [geodesic path tracing](https://geometry-central.net/surface/algorithms/geodesic_paths/).
 
-Each sampled cross-section is rigid and oriented to the face normal. The sweep
+Each sampled cross-section is rigid. Frame normals use angle-weighted vertex
+normals interpolated across connected smooth faces, matching the native mapper
+while keeping creases over 60 degrees sharp. Headings are projected into these
+frame planes; navigation still unfolds the exact triangle geometry. This avoids
+normal jumps at every edge of a finely tessellated bowl or torus. The sweep
 bends along its centerline; it does **not** independently map every point across
 the profile's width onto the surface. Use a sufficiently fine reference mesh and
 a narrow profile for a surface-following ribbon. Wide profiles, sharp creases,
 large depth offsets, and paths crossing themselves can produce overlaps or
-self-intersections. Depth and orientation are discontinuous at sharp creases;
-this version does not build mitered or rounded joins there.
+self-intersections. Sweep construction checks the progression of every profile
+vertex between stations and rejects local folds/collapse with
+`:reason :surface-sweep-fold`. This includes unsafe sharp inward joins and
+excessive offsets. Depth and orientation remain discontinuous at sharp creases;
+this version does not build mitered or rounded joins there. The guard does not
+detect collisions between distant portions of a path, or guarantee clearance
+from other geometry. Changing the profile inside a surrounding `loft` may also
+introduce intersections that were absent from its individual forwards.
+
+See [concavity validation](concavity-validation.md) for the tested cases, the
+independent output-mesh checks, and runnable bowl/torus examples.
 
 When a walk reaches a vertex with nonzero angle defect, continuation is ambiguous
 and raises `:reason :vertex-singularity`, with the point and face in `ex-data`.
