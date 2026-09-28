@@ -17,7 +17,7 @@ A beginner friendly introduction to developing with Plexus is available [here](h
 # Install
 
 ```clojure
-org.clojars.cartesiantheatrics/plexus {:mvn/version "2.0.0"}
+org.clojars.cartesiantheatrics/plexus {:mvn/version "2.1.0"}
 ```
 
 On the JVM, also add the native Manifold `2.2.0` artifact for your platform
@@ -546,6 +546,50 @@ You can rotate in place without extruding using `rotate`.
 ```
 
 ![Rotate Example](https://github.com/SovereignShop/plexus/blob/main/resources/images/rotate-example.png)
+
+## Surface Navigation
+
+You can make an extrusion follow a Manifold with `on-surface`. Here we walk a rectangular
+cross section around a cylinder, branch in two directions, and lift the final segment away
+from the surface:
+
+``` clojure
+(require
+ '[clj-manifold3d.core :as m]
+ '[plexus.core
+   :refer [result frame forward extrude branch rotate translate union export
+           surface on-surface]])
+
+(let [support (m/cylinder 30 20 20 96)]
+  (-> (extrude
+       (result :name :model :expr (union support :ribbon))
+       (frame :name :ribbon :cross-section (m/square 1.2 0.6 true))
+       (on-surface :surface (surface support)
+                   :origin [20 0 8.37] :direction [0 1 0.15]
+                   :depth 0.45 :step-size 0.5)
+
+       (forward :length 65)
+       (branch :from :ribbon
+               (rotate :y -0.7)
+               (forward :length 12))
+       (rotate :y 0.7)
+       (forward :length 12)
+       (translate :y 1)
+       (forward :length 4))
+      (export "surface-navigation.glb"
+              (m/material :color [0 0.7 0.7 1.0] :metalness 0.2))))
+```
+
+![Surface Navigation Example](resources/images/surface-navigation-example.png)
+
+Local Z walks forward, X walks sideways, and Y controls depth above or below the surface.
+`rotate :y` turns the heading on the surface. As in ordinary space, `translate` moves without
+extruding and `branch` restores the starting frame when it finishes. Use `off-surface` to
+continue in ordinary space from the current position and orientation.
+
+The cross section bends along the path and stays rigid across its width. See
+[surface navigation](docs/surface-navigation.md) for supported operations and geometric limits,
+including concave surfaces and sharp corners.
 
 ## Result
 

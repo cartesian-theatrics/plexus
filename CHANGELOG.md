@@ -1,17 +1,29 @@
 # Changelog
 
-## Unreleased
+## 2.1.0 — 2026-09-27
+
+Navigate Manifold surfaces and bend extrusions along them on the JVM, JavaScript/WASM,
+and SCI. Existing spatial modeling APIs and dependencies are unchanged.
 
 - Validate concave navigation and sweeps on bowls, torus interiors, V-valleys,
   and narrow trenches. Smooth frame normals within physical face fans, coalesce
   stations that would fold locally, and reject unsafe sweeps with source-aware
   `:surface-sweep-fold` errors.
-
 - Add portable surface navigation: prepared surfaces, attachment/detachment,
   geodesic forward and sideways walks, normal depth, heading turns, and bent sweeps.
 - Preserve surface cursors through branches and rebuilds, with SCI source macros
   and static option checks. See [surface navigation](docs/surface-navigation.md)
   for geometric limits and supported operations.
+- Add a rendered surface-navigation example in the README and runnable GLB examples.
+
+### Validation
+
+- JVM: 56 tests, 295 assertions, no failures.
+- JavaScript/WASM: 48 tests, 276 assertions, no failures or errors.
+- Advanced JavaScript compilation: no warnings.
+- Static option checks: valid fixture accepted; 12 invalid options located.
+- Concavity checks cover bowls, torus interiors, valleys, and narrow trenches;
+  see [the validation report](docs/concavity-validation.md).
 
 ## 2.0.0 — 2026-09-24
 
